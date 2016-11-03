@@ -1,0 +1,11 @@
+{
+  "name": "passport-okta-openidconnect",
+  "version": "0.0.1",
+  "description": "Passport strategy for OpenID Connect to Okta",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "dependencies": {
+    "oauth": "^0.9.14",
+    "passport-openidconnect": "github:lboyette-okta/passport-openidconnect#1cf968b"
+  }
+}
