@@ -29,6 +29,16 @@ function Strategy(options, verify) {
 
 util.inherits(Strategy, OIDCStrategy);
 
+// Allow sessionToken option
+Strategy.prototype.authorizationParams = function(options) {
+  if (options.sessionToken) {
+    return {
+      sessionToken: options.sessionToken
+    };
+  }
+  return {};
+}
+
 // Allow basic auth for client secrets
 Strategy.prototype._getOAuth2Client = function (config) {
   var strategy = this;

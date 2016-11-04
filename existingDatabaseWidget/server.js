@@ -2,7 +2,9 @@ var express = require('express');
 var passport = require('passport');
 var Strategy = require('../passport-okta-openidconnect').Strategy;
 var db = require('./db');
+var path = require('path');
 
+var widgetDirectory = path.resolve(require.resolve('@okta/okta-signin-widget'), '../..');
 
 // Configure the openidconnect strategy for use by Passport.
 var DOMAIN = 'YOUR_DOMAIN';
@@ -61,6 +63,9 @@ app.use(require('cookie-parser')());
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
 
+// Host the widget
+app.use('/widget', express.static(widgetDirectory));
+
 // Initialize Passport and restore authentication state, if any, from the
 // session.
 app.use(passport.initialize());
@@ -72,8 +77,17 @@ app.get('/',
     res.render('home', { user: req.user });
   });
 
-app.get('/login',
-  passport.authenticate('okta-oidc'));
+app.get('/login', function(req, res, next) {
+  // Get sessionToken from query param
+  if (req.query.sessionToken) {
+    passport.authenticate('okta-oidc', {
+      sessionToken: req.query.sessionToken
+    })(req, res, next);
+
+  } else {
+    res.render('login');
+  }
+});
 
 app.get('/callback', 
   passport.authenticate('okta-oidc', { failureRedirect: '/' }),
