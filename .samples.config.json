@@ -7,7 +7,7 @@
   },
   "server": {
     "port": 3000,
-    "startSignal": "bundle is now VALID"
+    "startSignal": "SERVER STARTED"
   },
   "mockOkta": {
     "port": 7777,
