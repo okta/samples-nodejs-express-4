@@ -12,6 +12,7 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
+    "start": "node lib/index.js",
     "test": "webdriver-manager update && protractor test/e2e/conf.js",
     "mock-okta": "node tools/mock-okta",
     "mock-okta:debug": "DEBUG=mock-okta npm run mock-okta"
@@ -25,5 +26,14 @@
     "minimist": "1.2.0",
     "protractor": "4.0.4",
     "yakbak": "2.5.0"
+  },
+  "dependencies": {
+    "@okta/samples-js-angular-1": "1.1.0-alpha.1",
+    "consolidate": "0.14.1",
+    "cookie-parser": "1.4.3",
+    "express": "4.14.0",
+    "express-session": "1.14.2",
+    "mustache": "2.2.1",
+    "request": "2.78.0"
   }
 }
