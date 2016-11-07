@@ -1,0 +1,18 @@
+{
+  "oidc": {
+    "oktaUrl": "http://127.0.0.1:7777",
+    "clientId": "5VNm1xZ6tnr8aDeGrHWf",
+    "clientSecret": "noRGO0dbWGN8qaVoNl-0PjEQAtrsB18u4pbm96y2",
+    "redirectUri": "http://localhost:3000/authorization-code/callback"
+  },
+  "server": {
+    "port": 3000,
+    "startSignal": "bundle is now VALID"
+  },
+  "mockOkta": {
+    "port": 7777,
+    "proxy": "http://127.0.0.1",
+    "proxied": "http://rain.okta1.com:1802",
+    "cdn": "http://cdn.okta1.com"
+  }
+}

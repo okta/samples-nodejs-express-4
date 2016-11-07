@@ -1,0 +1,29 @@
+{
+  "name": "@okta/samples-nodejs-express-4",
+  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://artifacts.aue1d.saasure.com/artifactory/api/npm/npm-okta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okta/samples-nodejs-express-4.git"
+  },
+  "bugs": "https://github.com/okta/samples-nodejs-express-4/issues",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/okta/samples-nodejs-express-4",
+  "scripts": {
+    "test": "webdriver-manager update && protractor test/e2e/conf.js",
+    "mock-okta": "node tools/mock-okta",
+    "mock-okta:debug": "DEBUG=mock-okta npm run mock-okta"
+  },
+  "devDependencies": {
+    "chalk": "1.1.3",
+    "cli-table2": "0.2.0",
+    "connect": "3.5.0",
+    "diff": "3.0.1",
+    "jasmine-reporters": "2.2.0",
+    "minimist": "1.2.0",
+    "protractor": "4.0.4",
+    "yakbak": "2.5.0"
+  }
+}
