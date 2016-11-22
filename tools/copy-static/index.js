@@ -10,33 +10,19 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-'use strict';
+/* eslint no-console: 0 */
+const fs = require('fs-extra');
+const path = require('path');
+const config = require('../../.samples.config.json');
 
-const util = require('./shared/util');
+const rootDir = path.resolve(__dirname, '../../');
 
-class ScenariosPage {
+// When we have more frontend samples, expose option to switch out angular
+// with a frontend of their choice.
+const frontend = 'samples-js-angular-1';
 
-  constructor() {
-    this.$linkAuthCodeLoginRedirect = $(util.se('auth-code-login-redirect'));
-    this.$linkAuthCodeLoginCustom = $(util.se('auth-code-login-custom'));
-  }
+const fromPath = `${rootDir}/node_modules/@okta/${frontend}/dist`;
+const toPath = `${rootDir}/${config.server.staticDir}`;
 
-  load() {
-    return browser.get('http://localhost:3000/');
-  }
-
-  waitForPageLoad() {
-    return util.wait(this.$linkAuthCodeLoginRedirect);
-  }
-
-  chooseAuthCodeLoginRedirect() {
-    return this.$linkAuthCodeLoginRedirect.click();
-  }
-
-  chooseAuthCodeLoginCustom() {
-    return this.$linkAuthCodeLoginCustom.click();
-  }
-
-}
-
-module.exports = ScenariosPage;
+console.log(`Copying ${frontend}\n  from ${fromPath}\n    to ${toPath}`);
+fs.copySync(fromPath, toPath);
