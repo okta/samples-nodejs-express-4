@@ -1,3 +1,15 @@
+/*!
+ * Copyright (c) 2015-2016, Okta, Inc. and/or its affiliates. All rights reserved.
+ * The Okta software accompanied by this notice is provided pursuant to the Apache License, Version 2.0 (the "License.")
+ *
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 /* eslint no-param-reassign:0 no-console:0, brace-style:0 */
 
 'use strict';
@@ -117,6 +129,7 @@ util.mapRequestToCache = (req) => {
   const headers = req.headers;
   const orig = Object.assign({}, headers);
   const data = {};
+  const isPreflight = !!headers['access-control-request-method'];
 
   // Delete headers that might differ between browsers and browser state
   delete headers['upgrade-insecure-requests'];
@@ -130,9 +143,39 @@ util.mapRequestToCache = (req) => {
   headers['user-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; ' +
     'rv:48.0) Gecko/20100101 Firefox/48.0';
 
+  // PhantomJS uses "Keep-Alive" vs. "keep-alive"
+  headers.connection = headers.connection.toLowerCase();
+
   // Enforce a consistent accept-language and encoding
   headers['accept-language'] = 'en-US';
   headers['accept-encoding'] = 'gzip';
+
+  // Enforce a consistent accept for html responses
+  if (headers.accept && headers.accept.indexOf('text/html') > -1) {
+    headers.accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8';
+  }
+
+  // Enforce 'application/json' on api requests - PhantomJs does not send a
+  // contentType on DELETE requests
+  if (!isPreflight && req.url.indexOf('/api/v1') > -1) {
+    headers['content-type'] = 'application/json';
+  }
+
+  if (isPreflight) {
+    // Chrome does not send the content-length header on empty pre-flight requests
+    if (headers['content-length'] === '0') {
+      delete headers['content-length'];
+    }
+
+    // Browsers vary on which access-control-request headers they send, and the
+    // ordering.
+    headers['access-control-request-headers'] = headers['access-control-request-headers']
+      .split(',')
+      .map(header => header.trim())
+      .filter(header => ['accept', 'origin'].indexOf(header) === -1)
+      .sort()
+      .join(', ');
+  }
 
   // Remove cookies that update values on every request
   headers.cookie = headers.cookie || '';
