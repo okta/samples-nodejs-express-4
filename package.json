@@ -1,6 +1,6 @@
 {
   "name": "@okta/samples-nodejs-express-4",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "publishConfig": {
     "registry": "https://artifacts.aue1d.saasure.com/artifactory/api/npm/npm-okta"
   },
@@ -13,11 +13,15 @@
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
     "start": "node lib/index.js",
-    "test": "webdriver-manager update && protractor test/e2e/conf.js",
+    "test": "npm run test:app-server-all && npm run test:e2e",
     "mock-okta": "node tools/mock-okta",
     "mock-okta:debug": "DEBUG=mock-okta npm run mock-okta",
     "wrap": "node tools/wrap-dependencies",
-    "prestart": "node tools/copy-static"
+    "prestart": "node tools/copy-static",
+    "test:e2e": "webdriver-manager update && protractor test/e2e/conf.js",
+    "test:mock-okta": "node test/app-server/lib/test-mock-okta",
+    "test:app-server": "mocha test/app-server/index --bail",
+    "test:app-server-all": "mocha test/app-server/with-app-server-start"
   },
   "devDependencies": {
     "chalk": "1.1.3",
@@ -31,11 +35,14 @@
   },
   "dependencies": {
     "@okta/samples-js-angular-1": "1.3.0",
+    "chai": "3.5.0",
+    "chai-http": "3.0.0",
     "consolidate": "0.14.1",
     "cookie-parser": "1.4.3",
     "express": "4.14.0",
     "express-session": "1.14.2",
     "fs-extra": "1.0.0",
+    "mocha": "3.1.2",
     "mustache": "2.2.1",
     "request": "2.78.0"
   }
