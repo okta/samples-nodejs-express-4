@@ -20,16 +20,15 @@ We use a simplified form of [Atom's](https://github.com/atom/atom/blob/master/CO
 
 #### Emoji Categories
 Our categories include:
-  * :seedling: `:seedling`: when creating a new feature
+  * :seedling: `:seedling:` when creating a new feature
   * :bug: `:bug:` when fixing a bug
   * :white_check_mark: `:white_check_mark:` when adding tests
   * :art: `:art:` when improving the format/structure of the code
   * :memo: `:memo:` when writing docs
   * :fire: `:fire:` when removing code or files
-  * :package: `:package` when pushing a new release
-  * :arrow_up: `:arrow_up:` when upgrading dependencies
+  * :package: `:package:` when pushing a new release
+  * :arrow_up: `:arrow_up:` when upgrading dependencies, or generating files
   * :arrow_down: `:arrow_down:` when downgrading dependencies
-  * :space_invader: `:space_invader:` when using generated files
 
 If you do not see an exact emoji match, use the best matching emoji.
 

@@ -20,6 +20,9 @@ const chalk = require('chalk');
 const diff = require('diff');
 const debug = require('debug')('mock-okta');
 const querystring = require('querystring');
+const jws = require('jws');
+const fs = require('fs');
+const path = require('path');
 
 const util = module.exports;
 
@@ -208,6 +211,10 @@ util.mapRequestToCache = (req) => {
     delete headers.cookie;
   }
 
+  else if (req.url === '/oauth2/v1/keys') {
+    data.isKeysReq = true;
+  }
+
   // When we kill the session, store the incoming cookies to delete them
   // in the response headers
   else if (req.url.indexOf('/sessions/me') > -1 && req.method === 'DELETE') {
@@ -281,9 +288,40 @@ function swapIdToken(idToken, data) {
 
   logDiff('Swapping out id_token claims', origClaims, claims);
 
+  // TO GENERATE PRIVATE KEY:
+  // openssl genrsa -out private.pem 1024
+  // openssl genrsa -out private.pem 2048 // 2!!!!!!
+  //
+  // TO GENERATE PUBLIC KEY:
+  // openssl rsa -in private.pem -pubout > public.pem
+  //
+  // TO GENERATE JWK:
+  // npm install -g pem-jwk
+  // cat public.pem | pem-jwk > public.jwk
+  const secret = fs.readFileSync(__dirname + '/../../certs/private2.pem');
+  console.log(secret);
+  const newSig = jws.sign({
+    header: {
+      alg: 'RS256',
+      kid: 'TEST_KID'
+    },
+    payload: claims,
+    secret: secret
+  });
+
+  const newHeader = new Buffer(JSON.stringify({
+    alg: 'RS256',
+    kid: 'TEST_KID'
+  }), 'utf8').toString('base64');
+
   // Pack it back into the id_token JWT, and return it
   const swapped = new Buffer(JSON.stringify(claims), 'utf8').toString('base64');
-  return `${header}.${swapped}.${signature}`;
+
+  console.log('SIGNATURE!!!');
+  console.log(newSig);
+  return newSig;
+
+  // return `${newHeader}.${swapped}.${newSig}`;
 }
 
 /**
@@ -373,6 +411,20 @@ util.mapCachedBodyToResponse = (chunk, data) => {
       iss: data.proxy,
     });
     newChunk = newChunk.replace(idToken, newIdToken);
+  }
+
+  // Add extra key for keys request
+  if (data.isKeysReq) {
+    const json = JSON.parse(newChunk);
+    json.keys.push({
+      "alg": "RS256",
+      "e": "AQAB",
+      "n": "wH5VYy1YD2bxgm06l95uYD_iLd2nvBP0gNA3ITwN6R5x4vH7oeGaQWBHg3uyoBmh-Th0fP4TyCbzanD17OvFllO0SvMWfTsJqWOHJ8ASrHffkpVP9bhLsiCBQ3dSGmj6R9srf5Uz71GHkT2QXzEaSjc-BhDSuf3Ne8RyKxJgCwvWrdTmr-KfmBNxy9-4zle1vtLIZmIBFUELJgAMmm143Yp8aXVKvwneSvMqttsZkHcdEBnBHxzMlSclFFZznvC1h1BGOpmDZNl4e0cXV7O6opz3cFr0oZJnw-2Fj2ue9pWqkk0xx3YxtY2tf2_mtvb4oPi7fjo2tcuGyMaN_Bey9w",
+      "kid": "TEST_KID",
+      "kty": "RSA",
+      "use": "sig"
+    });
+    newChunk = JSON.stringify(json);
   }
 
   return newChunk;
