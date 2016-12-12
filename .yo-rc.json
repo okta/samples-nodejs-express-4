@@ -4,6 +4,6 @@
     "environment": "NodeJs",
     "framework": "express-4",
     "name": "samples-nodejs-express-4",
-    "version": "1.3.0"
+    "version": "1.5.0"
   }
 }
