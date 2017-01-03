@@ -12,8 +12,8 @@
 
 const util = require('../lib/util');
 
-describe('Scenarios', () => {
+describe('Overview', () => {
   describe('GET /', () => {
-    util.itLoadsTemplateFor(() => util.get('/'));
+    util.itLoadsTemplateFor('overview', () => util.get('/'));
   });
 });
