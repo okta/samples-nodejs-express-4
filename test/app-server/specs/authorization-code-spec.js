@@ -125,11 +125,11 @@ function createSession() {
 
 describe('Authorization Code', () => {
   describe('GET /authorization-code/login-redirect', () => {
-    util.itLoadsTemplateFor(() => util.get(LOGIN_REDIRECT_PATH));
+    util.itLoadsTemplateFor('login-redirect', () => util.get(LOGIN_REDIRECT_PATH));
   });
 
   describe('GET /authorization-code/login-custom', () => {
-    util.itLoadsTemplateFor(() => util.get(LOGIN_CUSTOM_PATH));
+    util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
   });
 
   describe('GET /authorization-code/callback', () => {
@@ -181,6 +181,20 @@ describe('Authorization Code', () => {
         mock.keysOptional = true;
         const req = mockOktaRequests(mock).then(validateCallback);
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_AUTHORIZATION);
+      });
+
+      it('sets the "accept" header to "application/json"', () => {
+        const mock = util.expand('req.headers.accept', 'application/json');
+        mock.keysOptional = true;
+        const req = mockOktaRequests(mock).then(validateCallback);
+        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_ACCEPT);
+      });
+
+      it('sets the "connection" header to "close"', () => {
+        const mock = util.expand('req.headers.connection', 'close');
+        mock.keysOptional = true;
+        const req = mockOktaRequests(mock).then(validateCallback);
+        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_CONNECTION);
       });
     });
 
@@ -315,7 +329,7 @@ describe('Authorization Code', () => {
         const req = createSession().then(agent => agent.get(PROFILE_PATH));
         return util.shouldNotRedirect(req, errors.CODE_PROFILE_NO_REDIRECT);
       });
-      util.itLoadsTemplateFor(() => createSession().then(agent => agent.get(PROFILE_PATH)));
+      util.itLoadsTemplateFor('profile', () => createSession().then(agent => agent.get(PROFILE_PATH)));
     });
   });
 

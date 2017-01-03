@@ -32,6 +32,14 @@ exports.MISSING_FRONTEND_ASSET = `
       3. Configure your app server to serve static files from server.staticDir
 `;
 
+exports.DOC_PARTIAL = `
+      To load mustache partials, refer to:
+      1. The mustache homepage for a list of language specific docs:
+         https://mustache.github.io/
+      2. The mustache manual:
+         https://mustache.github.io/mustache.5.html
+`;
+
 exports.CODE_COOKIES_MISSING = `
       The /authorization-code/callback endpoint should return status code 401 if
       no state or nonce cookies are sent.
@@ -78,6 +86,22 @@ exports.CODE_TOKEN_INVALID_CONTENT_TYPE = `
       this, set this header:
 
       content-type: application/x-www-form-urlencoded
+`;
+
+exports.CODE_TOKEN_INVALID_HEADER_ACCEPT = `
+      The /authorization-code/callback endpoint should make a request to the
+      Okta token endpoint. The /token request should be url encoded. To fix
+      this, set this header:
+
+      accept: application/json
+`;
+
+exports.CODE_TOKEN_INVALID_HEADER_CONNECTION = `
+      The /authorization-code/callback endpoint should make a request to the
+      Okta token endpoint. The /token request should be url encoded. To fix
+      this, set this header:
+
+      connection: close
 `;
 
 exports.CODE_TOKEN_INVALID_AUTHORIZATION = `

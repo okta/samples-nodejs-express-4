@@ -15,6 +15,7 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const config = require('../../../.samples.config.json');
+const errors = require('./errors');
 
 const expect = chai.expect;
 const util = module.exports = {};
@@ -133,7 +134,7 @@ util.shouldNotRedirect = (reqPromise, msg) => (
  * possible (or desired) to use the template - in that case, we only check that
  * the response matches the minimum to serve the frontend assets.
  */
-util.itLoadsTemplateFor = (reqFn) => {
+util.itLoadsTemplateFor = (docPartial, reqFn) => {
   function hasBodyText(text) {
     return reqFn().then(res => expect(res.text).to.contain(text));
   }
@@ -158,5 +159,11 @@ util.itLoadsTemplateFor = (reqFn) => {
   ));
   it('runs bootstrap', () => (
     hasBodyText('bundle.bootstrap(')
+  ));
+  it('includes the correct doc partial', () => (
+    hasBodyText(`class="doc-${docPartial}"`).catch(() => {
+      const err = `Expected docs/${docPartial}.mustache to be loaded`;
+      throw new Error(`${err}\n${errors.DOC_PARTIAL}`);
+    })
   ));
 };
