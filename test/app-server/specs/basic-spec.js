@@ -31,10 +31,10 @@ describe('The Basics', () => {
 
   describe('Frontend Static Assets', () => {
     const assetsToCheck = [
-      'bundle.js',
-      'css/okta-sign-in.min.css',
-      'css/okta-theme.css',
-      'font/montserrat-light-webfont.woff',
+      'assets/bundle.js',
+      'assets/css/okta-sign-in.min.css',
+      'assets/css/okta-theme.css',
+      'assets/font/montserrat-light-webfont.woff',
     ];
     assetsToCheck.forEach((asset) => {
       it(`serves ${asset}`, () => (
