@@ -1,10 +1,18 @@
 {
-  "oidc": {
+  "oidc2": {
     "oktaUrl": "http://127.0.0.1:7777",
     "clientId": "zYVNoNIeSwul32vpNiOz",
     "clientSecret": "8UxQqreZu4WQBK-KIqKQItqvtv5UlWRlqI36l4sb",
     "redirectUri": "http://localhost:3000/authorization-code/callback"
   },
+
+  "oidc": {
+    "oktaUrl": "https://oswtests.oktapreview.com",
+    "clientId": "rW47c465c1wc3MKzHznu",
+    "clientSecret": "TsQ1Fmglq43ZwrjK418zxjY-t6wa71h2WsOPOMW2",
+    "redirectUri": "http://localhost:3000/done"
+  },
+
   "server": {
     "staticDir": "dist",
     "startSignal": "SERVER STARTED",
