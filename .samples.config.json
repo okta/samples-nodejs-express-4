@@ -10,12 +10,12 @@
     "oktaUrl": "https://oswtests.oktapreview.com",
     "clientId": "rW47c465c1wc3MKzHznu",
     "clientSecret": "TsQ1Fmglq43ZwrjK418zxjY-t6wa71h2WsOPOMW2",
-    "redirectUri": "http://localhost:3000/done"
+    "redirectUri": "http://localhost:3000/authorization-code/callback"
   },
 
   "server": {
     "staticDir": "dist",
-    "startSignal": "SERVER STARTED",
+    "startSignal": "NodeJS Express server started",
     "port": 3000,
     "framework": "express-4",
     "environment": "NodeJs"
