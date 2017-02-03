@@ -1,12 +1,12 @@
 {
-  "oidc2": {
+  "oidc": {
     "oktaUrl": "http://127.0.0.1:7777",
     "clientId": "zYVNoNIeSwul32vpNiOz",
     "clientSecret": "8UxQqreZu4WQBK-KIqKQItqvtv5UlWRlqI36l4sb",
     "redirectUri": "http://localhost:3000/authorization-code/callback"
   },
 
-  "oidc": {
+  "oidc_preview": {
     "oktaUrl": "https://oswtests.oktapreview.com",
     "clientId": "rW47c465c1wc3MKzHznu",
     "clientSecret": "TsQ1Fmglq43ZwrjK418zxjY-t6wa71h2WsOPOMW2",

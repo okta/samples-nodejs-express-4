@@ -31,6 +31,7 @@
 const http = require('http');
 
 const config = require('../../../.samples.config.json');
+const wellKnown = require('./well-known');
 
 let mocks = [];
 
@@ -71,16 +72,26 @@ function validateReq(expected, req) {
 function handleNextRequest(req, res) {
   let body;
   try {
-    if (mocks.length === 0) {
+    // Handle .well-known first - it is special, it can occur at any time
+    // Should probably do the same for the keys request - it might be
+    // possible that they want to do this on startup as well as later on
+    if (req.url === '/.well-known/openid-configuration') {
+      console.log('USING WELL KNOWN:');
+      console.log(wellKnown);
+      body = wellKnown;
+    }
+    else if (mocks.length === 0) {
       throw new Error(`Unexpected request: ${req.url}`);
     }
-    const nextRequest = mocks.shift();
-    if (req.url !== nextRequest.req.url && nextRequest.optional) {
-      handleNextRequest(req, res);
-      return;
+    else {
+      const nextRequest = mocks.shift();
+      if (req.url !== nextRequest.req.url && nextRequest.optional) {
+        handleNextRequest(req, res);
+        return;
+      }
+      validateReq(nextRequest.req, req);
+      body = nextRequest.res;
     }
-    validateReq(nextRequest.req, req);
-    body = nextRequest.res;
   } catch (e) {
     res.statusCode = 500;
     body = {

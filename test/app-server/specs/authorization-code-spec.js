@@ -21,6 +21,7 @@ const jws = require('jws');
 const merge = require('lodash.merge');
 const crypto = require('crypto');
 
+const LOGIN_PATH = '/authorization-code/login';
 const LOGIN_REDIRECT_PATH = '/authorization-code/login-redirect';
 const LOGIN_CUSTOM_PATH = '/authorization-code/login-custom';
 const CALLBACK_PATH = '/authorization-code/callback';
@@ -130,6 +131,31 @@ describe('Authorization Code', () => {
 
   describe('GET /authorization-code/login-custom', () => {
     util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
+  });
+
+  describe.only('GET /authorization-code/login', () => {
+    // It's at this point where we first make a redirect to Okta right? So,
+    // let's set the .well-known to some crazy url for the endpoint so we know
+    // that they're discovering it rather than hardcoding it! And then in the
+    // test-mock-okta server, don't really care about it at all, just always
+    // return the same json?
+    //
+    // Well, the problem is that we'll be hitting that url, which is wrong
+    // because we actually HAVE to make the request to our mock-okta server.
+    // Hmmm.....
+    //
+    // Maybe we can use the other aliases for localhost?
+    it('redirects to the authorizeUrl discovered in .well-known', () => {
+      return util.shouldNotError(util.get(CALLBACK_PATH), errors.CODE_COOKIES_MISSING);
+    });
+    it('has a state parameter');
+    it('has a nonce parameter');
+    it('has a nonce parameter');
+    it('sets response_type to "code"');
+    it('sets the clientId correctly');
+    it('sets redirect_uri correctly');
+    it('sets scope correctly');
+    it('passes sessionToken if its sent to /login');
   });
 
   describe('GET /authorization-code/callback', () => {
