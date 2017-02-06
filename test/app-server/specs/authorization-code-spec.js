@@ -20,6 +20,7 @@ const keys2 = require('../lib/keys2');
 const jws = require('jws');
 const merge = require('lodash.merge');
 const crypto = require('crypto');
+const url = require('url');
 
 const LOGIN_PATH = '/authorization-code/login';
 const LOGIN_REDIRECT_PATH = '/authorization-code/login-redirect';
@@ -27,6 +28,66 @@ const LOGIN_CUSTOM_PATH = '/authorization-code/login-custom';
 const CALLBACK_PATH = '/authorization-code/callback';
 const PROFILE_PATH = '/authorization-code/profile';
 const LOGOUT_PATH = '/authorization-code/logout';
+
+
+/**
+ *
+ */
+function setupLogin(options, mocks) {
+  const defaults = {
+    query: null,
+    req: {
+      url: '/oauth2/v1/authorize',
+      headers: {
+        host: '0.0.0.0:7777'
+      },
+    },
+    res: '<html></html>',
+  };
+
+  // THIS SUCKS, need something better here.
+  if (options && options.req && options.req.query) {
+    defaults.req.query = options.req.query;
+    delete options.req.query;
+    if (Object.keys(options.req).length === 0) {
+      delete options.req;
+    }
+  }
+
+  if (options && options.req && options.req.sessionToken) {
+    defaults.req.sessionToken = options.req.sessionToken;
+    delete options.req.sessionToken;
+    if (Object.keys(options.req).length === 0) {
+      delete options.req;
+    }
+  }
+
+  const final = Object.assign(defaults, options || {});
+  const reqs = [{req: final.req, res: final.res}].concat(mocks || []);
+  const uri = final.query ? `${LOGIN_PATH}${final.query}` : LOGIN_PATH;
+
+  const agent = util.agent();
+  return util.mockOktaRequest(reqs)
+  .then(() => agent.get(uri).send())
+  .then((res) => {
+    // I need to test redirects!!!
+    const redirect = res.redirects[0];
+    const query = url.parse(redirect, true).query;
+    return {agent, query, res};
+  });
+}
+
+function setupCallback(options, mocks) {
+  // If I want to treat keys like well-known, how do I handle the case
+  // where they keys have changed after they've started their server???!
+}
+
+
+
+
+
+
+
 
 function validateCallback() {
   return util.request()
@@ -133,72 +194,78 @@ describe('Authorization Code', () => {
     util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
   });
 
-  function mockOktaAuthorize(options) {
-    const req = {
-      url: '/oauth2/v1/authorize',
-      headers: {
-        host: '0.0.0.0:7777',
-      },
-    };
-  }
-
-  describe.only('GET /authorization-code/login', () => {
-    function expectLogin(options, msg) {
-      let loginUrl = LOGIN_PATH;
-      if (options.sessionToken) {
-        loginUrl += `?sessionToken=${options.sessionToken}`;
-        delete options.sessionToken;
-      }
-      const req = Object.assign({
-        url: '/oauth2/v1/authorize',
-        headers: {
-          host: '0.0.0.0:7777',
-        },
-      }, options);
-      const res = '<html></html>';
-      const promise = util.mockOktaRequest([{req, res}]).then(() => util.get(loginUrl));
+  describe('GET /authorization-code/login', () => {
+    function expectRedirect(options, msg) {
       const base = 'http://0.0.0.0:7777/oauth2/v1/authorize';
+      const promise = setupLogin(options).then(test => test.res);
       return util.shouldRedirectToBase(promise, base, msg);
     }
 
     it('redirects to the authorization_endpoint url discovered in .well-known', () => {
-      return expectLogin({}, errors.REDIRECT_AUTHORIZE_WELL_KNOWN);
+      return expectRedirect({}, errors.REDIRECT_AUTHORIZE_WELL_KNOWN);
     });
     it('redirects with the correct query params', () => {
       const mock = {
-        query: {
-          response_type: 'code',
-          client_id: 'zYVNoNIeSwul32vpNiOz',
-          redirect_uri: 'http://localhost:3000/authorization-code/callback',
-          scope: 'openid email profile',
-          state: 'RANDOM_NOT_EMPTY',
-          nonce: 'RANDOM_NOT_EMPTY',
+        req: {
+          query: {
+            response_type: 'code',
+            client_id: 'zYVNoNIeSwul32vpNiOz',
+            redirect_uri: 'http://localhost:3000/authorization-code/callback',
+            scope: 'openid email profile',
+            state: 'RANDOM_NOT_EMPTY',
+            nonce: 'RANDOM_NOT_EMPTY',
+          },
         }
       };
-      return expectLogin(mock, errors.REDIRECT_AUTHORIZE_QUERY);
+      return expectRedirect(mock, errors.REDIRECT_AUTHORIZE_QUERY);
     });
     it('passes through sessionToken if sent to /authorization-code/login', () => {
       const mock = {
-        sessionToken: 'test-session-token',
-        query: {
-          sessionToken: 'test-session-token',
-        },
+        query: '?sessionToken=test-session-token',
+        req: {
+          query: {
+            sessionToken: 'test-session-token',
+          },
+        }
       };
-      return expectLogin(mock, errors.REDIRECT_AUTHORIZE_SESSION_TOKEN);
+      return expectRedirect(mock, errors.REDIRECT_AUTHORIZE_SESSION_TOKEN);
     });
   });
 
   describe('GET /authorization-code/callback', () => {
+    // function setupLogin() {
+    //   const agent = util.agent();
+    //   const reqs = [{
+    //     req: {
+    //       url: '/oauth2/v1/authorize',
+    //     },
+    //     res: '<html></html>',
+    //   }];
+
+    //   return util.mockOktaRequest(reqs)
+    //   .then(() => agent.get(LOGIN_PATH).send())
+    //   .then((res) => {
+    //     const redirect = res.redirects[0];
+    //     const query = url.parse(redirect, true).query;
+    //     return {agent, query};
+    //   });
+    // }
+
     describe('Validating incoming /callback request', () => {
-      it('returns 401 if redirect cookies are not set', () => (
-        util.should401(util.get(CALLBACK_PATH), errors.CODE_COOKIES_MISSING)
-      ));
-      it('returns 401 if query "state" does not match cookie "state"', () => {
+      it('returns 403 if no query "state"', () => {
         const req = util.request()
-          .get(`${CALLBACK_PATH}?state=BAD_STATE`)
-          .set('Cookie', 'okta-oauth-nonce=SOME_NONCE;okta-oauth-state=SOME_STATE')
+          .get(`${CALLBACK_PATH}?code=SOME_CODE`)
           .send();
-        return util.should401(req, errors.CODE_QUERY_STATE_MISSING);
+        return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
+      });
+      it.only('returns 403 if query "state" does not match original "state"', () => {
+        return setupLogin().then((test) => {
+          const state = `${test.query.state}_BAD`;
+          const req = test.agent
+            .get(`${CALLBACK_PATH}?state=${state}&code=SOME_CODE`)
+            .send();
+          return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
+        });
       });
       it('returns 401 if query "code" is not set', () => {
         const req = util.request()

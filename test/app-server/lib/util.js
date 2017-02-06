@@ -107,6 +107,31 @@ util.should401 = (reqPromise, msg) => {
   return appendOktaLogOnError(reqPromise.then(success, fail));
 };
 
+/**
+ * Verifies that the response sets a 403 Forbidden status code
+ */
+util.should403 = (reqPromise, msg) => {
+  // Handler for "success" responses - since we are expecting a 401, this will
+  // always throw an error.
+  function success(res) {
+    const err = `Expected response to have statusCode 403, but got ${res.statusCode}`;
+    throw new Error(`${err}\n${msg}`);
+  }
+
+  // This is the expected response - additionally, we also expect that the
+  // statusCode is 401.
+  function fail(res) {
+    try {
+      expect(res).to.have.status(403);
+    } catch (e) {
+      throw new Error(`${e.message}\n${msg}`);
+    }
+  }
+
+  return appendOktaLogOnError(reqPromise.then(success, fail));
+};
+
+
 // ADD SOME DESCRIPTION HERE!
 function appendOktaLogOnError(reqPromise) {
   return reqPromise.catch((err) => {
@@ -159,7 +184,11 @@ util.shouldRedirectToBase = (reqPromise, base, msg) => (
       const redirects = res.redirects || [];
       const matches = redirects.filter((url) => url.indexOf(base) > -1);
       if (!matches.length) {
-        throw new Error(`Expected redirect to ${base}`);
+        let msg = `Expected redirect with baseUrl of "${base}"`;
+        if (redirects.length) {
+          msg += `, but got: ${redirects}`;
+        }
+        throw new Error(msg);
       }
     })
     .catch((err) => {
@@ -225,3 +254,47 @@ util.itLoadsTemplateFor = (docPartial, reqFn) => {
     })
   ));
 };
+
+// login
+// callback
+// token
+// util.setupLoginFlow = (options) => {
+//   const defaults = {
+//     login: {
+//       query: null,
+//       req: {
+//         url: '/oauth2/v1/authorize',
+//         headers: {
+//           host: '0.0.0.0:7777'
+//         },
+//       },
+//       res: '<html></html>',
+//     },
+//     callback: {
+//     },
+//   };
+
+//   const agent = util.agent();
+  
+//   // 1. /authorization-code/login
+
+
+//   const agent = util.agent();
+//   const reqs = [{
+//     req: {
+//       url: '/oauth2/v1/authorize',
+//     },
+//     res: '<html></html>',
+//   }];
+
+//   return util.mockOktaRequest(reqs)
+//         .then(() => agent.get(LOGIN_PATH).send())
+//     .then((res) => {
+//       const redirect = res.redirects[0];
+//       const query = url.parse(redirect, true).query;
+//       return {agent, query};
+//     });
+
+
+
+// };

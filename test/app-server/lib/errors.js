@@ -106,20 +106,12 @@ exports.REDIRECT_AUTHORIZE_SESSION_TOKEN = `
        {{authorization_endpoint}}?other=params&sessionToken=test-session-token
 `;
 
-exports.CODE_COOKIES_MISSING = `
-      The /authorization-code/callback endpoint should return status code 401 if
-      no state or nonce cookies are sent.
+exports.CODE_INVALID_QUERY_STATE = `
+      The /authorization-code/callback endpoint should return status code 403 if
+      a bad "state" query param is sent.
 
-      Validate that these cookies are set:
-        - okta-oauth-nonce
-        - okta-oauth-state
-`;
-
-exports.CODE_QUERY_STATE_MISSING = `
-      The /authorization-code/callback endpoint should return status code 401 if
-      no "state" query param is sent.
-
-      Validate that the 'state' query parameter is present.
+      Validate that the 'state' query parameter is present, and that it matches
+      the state that was constructed in the /authorization-code/login request.
 `;
 
 exports.CODE_QUERY_CODE_MISSING = `
