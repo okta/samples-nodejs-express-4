@@ -55,6 +55,57 @@ exports.DOC_PARTIAL = `
       the correct mustache template for this page.
 `;
 
+exports.REDIRECT_AUTHORIZE_WELL_KNOWN = `
+      The /authorization-code/login endpoint should redirect to the Okta
+      "authorization_endpoint" url specified by the OpenID Connect discovery
+      document.
+
+      Ideally, there is an OpenID Connect middleware library for the framework
+      you are writing this sample for. If so, the best option is to use this
+      to handle this and subsequent steps for you.
+
+      If there is no standard OpendID Connect middleware, or this middleware
+      does not support discovery through .well-known, you can write this code
+      yourself:
+
+      1. When the server bootstraps, make a request to the Okta OpenID Connect
+         discovery document - /.well-known/openid-configuration.
+
+         Read more about it here:
+         http://developer.okta.com/docs/api/resources/oidc.html#openid-connect-discovery-document
+
+      2. The response will contain values that you will use to make subsequent
+         requests, or for validation.
+
+      3. When a request is made to /authorization-code/login, redirect to the
+         authorization_endpoint url in the OpenID Connect discovery document.
+`;
+
+exports.REDIRECT_AUTHORIZE_QUERY = `
+      The /oauth2/v1/authorize redirect should contain these query parameters:
+
+      response_type: code
+      client_id:     ${config.oidc.clientId}
+      redirect_uri:  ${config.oidc.redirectUri}
+      scope:         openid email profile
+      state:         {{random state value}}
+      nonce:         {{random nonce value}}
+
+      For more information about constructing the /authorize request, refer to:
+      http://developer.okta.com/docs/api/resources/oidc.html#authentication-request
+`;
+
+exports.REDIRECT_AUTHORIZE_SESSION_TOKEN = `
+     The /authorization-code/login endpoint should accept a sessionToken query
+     parameter that is passed through to the /oauth2/v1/authorize redirect.
+
+     For example, a request to:
+       /authorization-code/login?sessionToken=test-session-token
+
+     Should redirect to:
+       {{authorization_endpoint}}?other=params&sessionToken=test-session-token
+`;
+
 exports.CODE_COOKIES_MISSING = `
       The /authorization-code/callback endpoint should return status code 401 if
       no state or nonce cookies are sent.

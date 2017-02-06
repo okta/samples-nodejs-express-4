@@ -29,18 +29,50 @@
 'use strict';
 
 const http = require('http');
+const url = require('url');
 
 const config = require('../../../.samples.config.json');
-const wellKnown = require('./well-known');
+const wellKnownResponse = require('./well-known');
 
 let mocks = [];
+let log = [];
+
+function sendResponse(req, res, body) {
+  // Add request and response to log
+  const headers = {};
+  let currentKey;
+  for (let i = 0; i < req.rawHeaders.length; i++) {
+    if (i % 2 === 0) {
+      currentKey = req.rawHeaders[i];
+    } else {
+      headers[currentKey] = req.rawHeaders[i];
+    }
+  }
+  log.push({
+    req: {
+      method: req.method,
+      url: req.url,
+      headers,
+    },
+    res: body,
+  });
+  
+  if (typeof body === 'object') {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(body, null, 2));
+  }
+  else {
+    res.end(body);
+  }
+}
 
 function handleSetRequest(req, res) {
   const chunks = [];
   req.on('data', chunk => chunks.push(chunk));
   req.on('end', () => {
     mocks = JSON.parse(Buffer.concat(chunks).toString());
-    res.end();
+    log = [];
+    sendResponse(req, res, {});
   });
 }
 
@@ -54,11 +86,24 @@ function handleDoneRequest(req, res) {
     res.statusCode = 200;
   }
   mocks = [];
-  res.end(body);
+  log = [];
+  sendResponse(req, res, body);
+}
+
+function handleLogRequest(res) {
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(log, null, 2));
+}
+
+function handleWellKnownRequest(req, res) {
+  sendResponse(req, res, wellKnownResponse);
 }
 
 function validateReq(expected, req) {
   Object.keys(expected).forEach((key) => {
+    if (key === 'url' || key === 'query') {
+      return;
+    }
     const expectedVal = expected[key];
     const reqVal = req[key];
     if (expectedVal instanceof Object) {
@@ -69,29 +114,77 @@ function validateReq(expected, req) {
   });
 }
 
+function nextMatchingRequest(req) {
+  // 1. If we've run out of requests, throw an error
+  if (mocks.length === 0) {
+    throw new Error(`Unexpected request: ${req.url}`);
+  }
+
+  // 2. Check the baseUrl, and skip the next expected request if its optional
+  const expected = mocks.shift();
+  const parsed = url.parse(req.url, true);
+
+  const matchesBase = parsed.pathname === expected.req.url;
+  if (!matchesBase && expected.optional) {
+    return nextMatchingRequest(req);
+  }
+  if (!matchesBase) {
+    const msg = `Expected ${expected.req.url}, but got ${req.url}`;
+    throw new Error(msg);
+  }
+
+  // 3. Check query parameters
+  const expectedQuery = expected.req.query || {};
+  const expectedKeys = Object.keys(expectedQuery);
+  const parsedQuery = parsed.query;
+  const parsedKeys = Object.keys(parsedQuery);
+
+  // 3.1 Check that all query parameters have the expected values
+  expectedKeys.forEach((key) => {
+    const expectedVal = expectedQuery[key];
+    const parsedVal = parsedQuery[key];
+    const errPrefix = `Expected query param "${key}" to`;
+
+    if (parsedVal === 'RANDOM_NOT_EMPTY') {
+      throw new Error(`${errPrefix} be random, but got "RANDOM_NOT_EMPTY"`);
+    }
+
+    if (expectedVal === parsedVal) {
+      return;
+    }
+
+    if (expectedVal !== 'RANDOM_NOT_EMPTY') {
+      throw new Error(`${errPrefix} equal "${expectedVal}", but got "${parsedVal}"`);
+    }
+
+    if (!parsedVal || parsedVal.trim() === '') {
+      throw new Error(`${errPrefix} be random, but got an empty value`);
+    }
+  });
+
+  // 3.3 Validate that the query parameters are in the "correct" order. Note,
+  //     this is a temporary measure until we support any order in the real
+  //     mock-okta server
+//   if (expectedKeys.toString() !== parsedKeys.toString()) {
+//     const msg = `
+// Expected query params to be sent in this order:
+// ${expectedKeys}
+
+// Note: For now, send the query params in this order - a future update to the
+// mock-okta server will fix this limitation.
+//     `;
+//     throw new Error(msg);
+//   }
+
+  return expected;
+}
+
 function handleNextRequest(req, res) {
   let body;
   try {
-    // Handle .well-known first - it is special, it can occur at any time
-    // Should probably do the same for the keys request - it might be
-    // possible that they want to do this on startup as well as later on
-    if (req.url === '/.well-known/openid-configuration') {
-      console.log('USING WELL KNOWN:');
-      console.log(wellKnown);
-      body = wellKnown;
-    }
-    else if (mocks.length === 0) {
-      throw new Error(`Unexpected request: ${req.url}`);
-    }
-    else {
-      const nextRequest = mocks.shift();
-      if (req.url !== nextRequest.req.url && nextRequest.optional) {
-        handleNextRequest(req, res);
-        return;
-      }
-      validateReq(nextRequest.req, req);
-      body = nextRequest.res;
-    }
+    const nextRequest = nextMatchingRequest(req);
+    validateReq(nextRequest.req, req);
+    body = nextRequest.res;
   } catch (e) {
     res.statusCode = 500;
     body = {
@@ -99,8 +192,7 @@ function handleNextRequest(req, res) {
       error_description: e.message,
     };
   }
-  res.setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify(body, null, 2));
+  sendResponse(req, res, body);
 }
 
 const server = http.createServer((req, res) => {
@@ -109,6 +201,10 @@ const server = http.createServer((req, res) => {
       return handleSetRequest(req, res);
     case '/mock/done':
       return handleDoneRequest(req, res);
+    case '/mock/log':
+      return handleLogRequest(res);
+    case '/.well-known/openid-configuration':
+      return handleWellKnownRequest(req, res);
     default:
       return handleNextRequest(req, res);
   }

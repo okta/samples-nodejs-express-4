@@ -14,6 +14,7 @@
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const url = require('url');
 const config = require('../../../.samples.config.json');
 const errors = require('./errors');
 
@@ -49,8 +50,20 @@ util.mockOktaRequest = reqs => (
   chai.request(baseMockOktaUrl).post('/mock/set').send(reqs)
 );
 
+/**
+ * Sends a /mock/done request to the test mock-server to check any final
+ * expectations.
+ */
 util.mockVerify = () => (
   chai.request(baseMockOktaUrl).post('/mock/done').send()
+);
+
+/**
+ * Sends a /mock/log request to the test mock-server to output log information
+ * for the current test.
+ */
+util.mockLog = () => (
+  chai.request(baseMockOktaUrl).post('/mock/log').send()
 );
 
 /**
@@ -76,30 +89,48 @@ util.expand = (key, val) => {
 util.should401 = (reqPromise, msg) => {
   // Handler for "success" responses - since we are expecting a 401, this will
   // always throw an error.
-  function success() {
-    throw new Error(msg);
+  function success(res) {
+    const err = `Expected response to have statusCode 401, but got ${res.statusCode}`;
+    throw new Error(`${err}\n${msg}`);
   }
 
   // This is the expected response - additionally, we also expect that the
   // statusCode is 401.
-  function fail(err) {
+  function fail(res) {
     try {
-      expect(err).to.have.status(401);
+      expect(res).to.have.status(401);
     } catch (e) {
       throw new Error(`${e.message}\n${msg}`);
     }
   }
 
-  return reqPromise.then(success, fail);
+  return appendOktaLogOnError(reqPromise.then(success, fail));
 };
+
+// ADD SOME DESCRIPTION HERE!
+function appendOktaLogOnError(reqPromise) {
+  return reqPromise.catch((err) => {
+    return util.mockLog().then((res) => {
+      let msg = err;
+      const logs = res.body;
+      if (logs.length) {
+        msg += `
+Requests to the test okta server:
+${JSON.stringify(logs, null, 2)}
+`
+      }
+      throw new Error(msg);
+    });
+  });
+}
 
 /**
  * Verifies that the response does not send an error code
  */
 util.shouldNotError = (reqPromise, msg) => (
-  reqPromise.catch((err) => {
+  appendOktaLogOnError(reqPromise.catch((err) => {
     throw new Error(`${err.message}. ${err.response.text}\n${msg}`);
-  })
+  }))
 );
 
 /**
@@ -108,11 +139,33 @@ util.shouldNotError = (reqPromise, msg) => (
 util.shouldRedirect = (reqPromise, redirectUri, msg) => (
   reqPromise
   .then((res) => {
+    console.log(res);
     expect(res).redirectTo(redirectUri);
   })
   .catch((err) => {
     throw new Error(`${err.message}\n${msg}`);
   })
+);
+
+/**
+ * Verifies that the response redirects to the given baseUrl. This differs
+ * from the standard "shouldRedirect" in that it is not an exact match -
+ * it only checks the base.
+ */
+util.shouldRedirectToBase = (reqPromise, base, msg) => (
+  appendOktaLogOnError(
+    reqPromise
+    .then((res) => {
+      const redirects = res.redirects || [];
+      const matches = redirects.filter((url) => url.indexOf(base) > -1);
+      if (!matches.length) {
+        throw new Error(`Expected redirect to ${base}`);
+      }
+    })
+    .catch((err) => {
+      throw new Error(`${err.message}\n${msg}`);
+    })
+  )
 );
 
 /**

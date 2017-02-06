@@ -133,29 +133,59 @@ describe('Authorization Code', () => {
     util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
   });
 
+  function mockOktaAuthorize(options) {
+    const req = {
+      url: '/oauth2/v1/authorize',
+      headers: {
+        host: '0.0.0.0:7777',
+      },
+    };
+  }
+
   describe.only('GET /authorization-code/login', () => {
-    // It's at this point where we first make a redirect to Okta right? So,
-    // let's set the .well-known to some crazy url for the endpoint so we know
-    // that they're discovering it rather than hardcoding it! And then in the
-    // test-mock-okta server, don't really care about it at all, just always
-    // return the same json?
-    //
-    // Well, the problem is that we'll be hitting that url, which is wrong
-    // because we actually HAVE to make the request to our mock-okta server.
-    // Hmmm.....
-    //
-    // Maybe we can use the other aliases for localhost?
-    it('redirects to the authorizeUrl discovered in .well-known', () => {
-      return util.shouldNotError(util.get(CALLBACK_PATH), errors.CODE_COOKIES_MISSING);
+    function expectLogin(options, msg) {
+      let loginUrl = LOGIN_PATH;
+      if (options.sessionToken) {
+        loginUrl += `?sessionToken=${options.sessionToken}`;
+        delete options.sessionToken;
+      }
+      const req = Object.assign({
+        url: '/oauth2/v1/authorize',
+        headers: {
+          host: '0.0.0.0:7777',
+        },
+      }, options);
+      const res = '<html></html>';
+      const promise = util.mockOktaRequest([{req, res}]).then(() => util.get(loginUrl));
+      const base = 'http://0.0.0.0:7777/oauth2/v1/authorize';
+      return util.shouldRedirectToBase(promise, base, msg);
+    }
+
+    it('redirects to the authorization_endpoint url discovered in .well-known', () => {
+      return expectLogin({}, errors.REDIRECT_AUTHORIZE_WELL_KNOWN);
     });
-    it('has a state parameter');
-    it('has a nonce parameter');
-    it('has a nonce parameter');
-    it('sets response_type to "code"');
-    it('sets the clientId correctly');
-    it('sets redirect_uri correctly');
-    it('sets scope correctly');
-    it('passes sessionToken if its sent to /login');
+    it('redirects with the correct query params', () => {
+      const mock = {
+        query: {
+          response_type: 'code',
+          client_id: 'zYVNoNIeSwul32vpNiOz',
+          redirect_uri: 'http://localhost:3000/authorization-code/callback',
+          scope: 'openid email profile',
+          state: 'RANDOM_NOT_EMPTY',
+          nonce: 'RANDOM_NOT_EMPTY',
+        }
+      };
+      return expectLogin(mock, errors.REDIRECT_AUTHORIZE_QUERY);
+    });
+    it('passes through sessionToken if sent to /authorization-code/login', () => {
+      const mock = {
+        sessionToken: 'test-session-token',
+        query: {
+          sessionToken: 'test-session-token',
+        },
+      };
+      return expectLogin(mock, errors.REDIRECT_AUTHORIZE_SESSION_TOKEN);
+    });
   });
 
   describe('GET /authorization-code/callback', () => {
