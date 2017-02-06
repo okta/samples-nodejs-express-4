@@ -29,6 +29,25 @@ const CALLBACK_PATH = '/authorization-code/callback';
 const PROFILE_PATH = '/authorization-code/profile';
 const LOGOUT_PATH = '/authorization-code/logout';
 
+// -----------------------------------------------------------------------------
+// HELPER FUNCTIONS
+
+/**
+ * Deep merge of two objects - merges source recursively into target
+ */
+function deepMerge(target, source) {
+  Object.keys(source).forEach((key) => {
+    if (!target[key] || typeof target[key] !== 'object') {
+      target[key] = source[key];
+    }
+    else {
+      deepMerge(target[key], source[key]);
+    }
+  });
+}
+
+// -----------------------------------------------------------------------------
+// SETUP FUNCTIONS
 
 /**
  *
@@ -44,36 +63,19 @@ function setupLogin(options, mocks) {
     },
     res: '<html></html>',
   };
+  deepMerge(defaults, options);
 
-  // THIS SUCKS, need something better here.
-  if (options && options.req && options.req.query) {
-    defaults.req.query = options.req.query;
-    delete options.req.query;
-    if (Object.keys(options.req).length === 0) {
-      delete options.req;
-    }
-  }
-
-  if (options && options.req && options.req.sessionToken) {
-    defaults.req.sessionToken = options.req.sessionToken;
-    delete options.req.sessionToken;
-    if (Object.keys(options.req).length === 0) {
-      delete options.req;
-    }
-  }
-
-  const final = Object.assign(defaults, options || {});
-  const reqs = [{req: final.req, res: final.res}].concat(mocks || []);
-  const uri = final.query ? `${LOGIN_PATH}${final.query}` : LOGIN_PATH;
+  const reqs = [{req: defaults.req, res: defaults.res}].concat(mocks || []);
+  const uri = defaults.query ? `${LOGIN_PATH}${defaults.query}` : LOGIN_PATH;
 
   const agent = util.agent();
   return util.mockOktaRequest(reqs)
   .then(() => agent.get(uri).send())
   .then((res) => {
-    // I need to test redirects!!!
+    // What happens if I'm not doing the redirect??!? Do I fail out beforehand?
     const redirect = res.redirects[0];
     const query = url.parse(redirect, true).query;
-    return {agent, query, res};
+    return {agent, res, state: query.state, nonce: query.nonce};
   });
 }
 
@@ -260,9 +262,8 @@ describe('Authorization Code', () => {
       });
       it.only('returns 403 if query "state" does not match original "state"', () => {
         return setupLogin().then((test) => {
-          const state = `${test.query.state}_BAD`;
           const req = test.agent
-            .get(`${CALLBACK_PATH}?state=${state}&code=SOME_CODE`)
+            .get(`${CALLBACK_PATH}?state=${test.state}&code=SOME_CODE`)
             .send();
           return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
         });
