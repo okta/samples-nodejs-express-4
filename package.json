@@ -41,6 +41,7 @@
     "body-parser": "^1.16.1",
     "chai": "3.5.0",
     "chai-http": "3.0.0",
+    "connect": "^3.5.0",
     "consolidate": "0.14.1",
     "cookie-parser": "1.4.3",
     "express": "4.14.0",

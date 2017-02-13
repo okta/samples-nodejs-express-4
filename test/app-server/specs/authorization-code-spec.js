@@ -35,7 +35,7 @@ const LOGOUT_PATH = '/authorization-code/logout';
 /**
  * DO I NEED TO DO SOME VALIDATE TING HERE TO MAKE SURE ALL REQUESTS ARE DONE???!?!!?!
  */
-function setupLogin(options, mocks) {
+function setupLogin(options) {
   const defaults = {
     query: null,
     req: {
@@ -48,7 +48,7 @@ function setupLogin(options, mocks) {
   };
   merge(defaults, options);
 
-  const reqs = [{req: defaults.req, res: defaults.res}].concat(mocks || []);
+  const reqs = [{req: defaults.req, res: defaults.res}];
   const uri = defaults.query ? `${LOGIN_PATH}${defaults.query}` : LOGIN_PATH;
 
   const agent = util.agent();
@@ -63,52 +63,60 @@ function setupLogin(options, mocks) {
 }
 
 function setupCallback(options) {
-  const reqs = [];
-  const kid = 'KID_FOO';
+  return setupLogin(options).then((test) => {
+    const reqs = [];
+    const kid = 'KID_FOO';
 
-  // 1. /oauth2/v1/token
+    // 1. /oauth2/v1/token
 
-  // Here, I should be able to specify:
-  // 1. Basic Auth clientId/secret vs. these in post body (but not both!)
-  // 2. Params in query, or in body
-  //
-  // Maybe instead of just URI, I can specify query parameters when I'm talking
-  // about the endpoint, and it can handle it on the backend? Already doing
-  // this a little with "query"... but need some extra validation?
+    // Here, I should be able to specify:
+    // 1. Basic Auth clientId/secret vs. these in post body (but not both!)
+    // 2. Params in query, or in body
+    //
+    // Maybe instead of just URI, I can specify query parameters when I'm talking
+    // about the endpoint, and it can handle it on the backend? Already doing
+    // this a little with "query"... but need some extra validation?
 
-  /**
-   * - Always pass either post or query through "query" - let's actually call it "params" like backend?
-   * - In mock-okta, we can accept both, and write a note saying that this is how the backend works
-   * - Do extra validation for this request? Has to either be through header or post
-   *   - How do we specify this in a unit test though? This is more like mock-okta test...
-   *   - Maybe we can catch the error and try the test again with the other method?!
-   *   - Need a test to make sure client_secret isn't passed through query?
-   * - Rename query to params? Verify this is what java calls it
-   */
+    /**
+     * - Always pass either post or query through "query" - let's actually call it "params" like backend?
+     * - In mock-okta, we can accept both, and write a note saying that this is how the backend works
+     * - Do extra validation for this request? Has to either be through header or post
+     *   - How do we specify this in a unit test though? This is more like mock-okta test...
+     *   - Maybe we can catch the error and try the test again with the other method?!
+     *   - Need a test to make sure client_secret isn't passed through query?
+     * - Rename query to params? Verify this is what java calls it
+     */
+    const req = options.req || {};
+    if (!req.url) {
+      req.url = '/oauth2/v1/token';
+    }
+    req.query = merge({
+      grant_type: 'authorization_code',
+      code: 'GOOD_CODE',
+      redirect_uri: 'http://localhost:3000/authorization-code/callback',
+    }, options.query || {});
 
-  const req = options.req || {};
-  if (!req.url) {
-    req.url = '/oauth2/v1/token';
-  }
-  req.query = merge({
-    grant_type: 'authorization_code',
-    code: 'GOOD_CODE',
-    redirect_uri: 'http://localhost:3000/authorization-code/callback',
-  }, options.query || {});
+    options.idToken = {
+      payload: {
+        nonce: test.nonce
+      }
+    };
 
-  const res = {
-    access_token: 'SOME_TOKEN',
-    token_type: 'Bearer',
-    expires_in: 3600,
-    scope: 'openid email profile',
-    id_token: createIdToken(options.idToken, kid),
-  };
-  merge(res, options.res);
-  reqs.push({ req, res });
+    const res = {
+      access_token: 'SOME_TOKEN',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: 'openid email profile',
+      id_token: createIdToken(options.idToken, kid),
+    };
+    merge(res, options.res);
+    reqs.push({ req, res });
 
-  return setupLogin(options, reqs).then((test) => {
-    return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${test.state}`)
-    .send()
+    return util.mockOktaRequest(reqs)
+    .then(() => {
+      const state = encodeURIComponent(test.state);
+      return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${state}`).send();
+    })
     .then((res) => {
       return res;
     });
@@ -146,7 +154,7 @@ function createIdToken(opts, kid) {
       name: 'John Adams',
       email: 'john@acme.com',
       ver: 1,
-      iss: 'http://127.0.0.1:7777',
+      iss: 'http://0.0.0.0:7777',
       aud: config.oidc.clientId,
       iat: 1478388232,
       exp: Math.floor(new Date().getTime() / 1000) + 3600,
@@ -291,14 +299,8 @@ describe('Authorization Code', () => {
 
     describe('Getting id_token via /oauth2/v1/token', () => {
       it.only('constructs the /token request with the correct query params', () => {
-        // Okay, getting error with accessToken - maybe I need to actually do
-        // it for real now?
         const req = setupCallback({});
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
-        // setupCallback
-        // const mock = { keysOptional: true };
-        // const req = mockOktaRequests(mock).then(validateCallback);
-        // return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
       });
       it('is a POST', () => {
         const mock = util.expand('req.method', 'POST');

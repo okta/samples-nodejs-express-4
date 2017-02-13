@@ -31,6 +31,8 @@
 const http = require('http');
 const url = require('url');
 const merge = require('lodash.merge');
+const connect = require('connect');
+const bodyParser = require('body-parser');
 
 const config = require('../../../.samples.config.json');
 const wellKnownResponse = require('./well-known');
@@ -69,13 +71,15 @@ function sendResponse(req, res, body) {
 }
 
 function handleSetRequest(req, res) {
-  const chunks = [];
-  req.on('data', chunk => chunks.push(chunk));
-  req.on('end', () => {
-    mocks = JSON.parse(Buffer.concat(chunks).toString());
-    log = [];
-    sendResponse(req, res, {});
-  });
+  mocks = req.body;
+  sendResponse(req, res, {});
+  // const chunks = [];
+  // req.on('data', chunk => chunks.push(chunk));
+  // req.on('end', () => {
+  //   mocks = JSON.parse(Buffer.concat(chunks).toString());
+  //   log = [];
+  //   sendResponse(req, res, {});
+  // });
 }
 
 function handleDoneRequest(req, res) {
@@ -150,9 +154,8 @@ function nextMatchingRequest(req) {
   // The backend does not distinguish between query or post params
   let parsedQuery = parsed.query;
   if (req.method === 'POST') {
-    console.log("POST PARAMS?!");
-    console.log(req.body);
-    // parsedQuery = merge(parsedQuery, req.body);
+    console.log('IS THIS CORRECT ALWAYS? I.E. CLIENT_SECRET...');
+    parsedQuery = merge(parsedQuery, req.body);
   }
   const parsedKeys = Object.keys(parsedQuery);
 
@@ -212,7 +215,7 @@ function handleNextRequest(req, res) {
   sendResponse(req, res, body);
 }
 
-const server = http.createServer((req, res) => {
+function fooHandler(req, res) {
   switch (req.url) {
     case '/mock/set':
       return handleSetRequest(req, res);
@@ -227,8 +230,40 @@ const server = http.createServer((req, res) => {
    default:
       return handleNextRequest(req, res);
   }
-});
+};
 
-server.listen(config.mockOkta.port, () => {
+const app = connect();
+
+// Handle post parameters
+// I ACTUALLY NEED TO DO THIS IN TEST-MOCK-OKTA, which means:
+// - Switch it over to using connect
+// - Then use bodyParser!
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+
+app.use(fooHandler);
+
+http.createServer(app).listen(config.mockOkta.port, () => {
   console.log(`Test server listening on port ${config.mockOkta.port}`);
 });
+
+// const server = http.createServer((req, res) => {
+//   switch (req.url) {
+//     case '/mock/set':
+//       return handleSetRequest(req, res);
+//     case '/mock/done':
+//       return handleDoneRequest(req, res);
+//     case '/mock/log':
+//       return handleLogRequest(res);
+//     case '/.well-known/openid-configuration':
+//       return handleWellKnownRequest(req, res);
+//     case '/oauth2/v1/keys':
+//       return handleKeysRequest(req, res);
+//    default:
+//       return handleNextRequest(req, res);
+//   }
+// });
+
+// server.listen(config.mockOkta.port, () => {
+//   console.log(`Test server listening on port ${config.mockOkta.port}`);
+// });
