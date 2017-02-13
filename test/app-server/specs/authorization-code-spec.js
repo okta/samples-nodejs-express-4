@@ -30,27 +30,10 @@ const PROFILE_PATH = '/authorization-code/profile';
 const LOGOUT_PATH = '/authorization-code/logout';
 
 // -----------------------------------------------------------------------------
-// HELPER FUNCTIONS
-
-/**
- * Deep merge of two objects - merges source recursively into target
- */
-function deepMerge(target, source) {
-  Object.keys(source).forEach((key) => {
-    if (!target[key] || typeof target[key] !== 'object') {
-      target[key] = source[key];
-    }
-    else {
-      deepMerge(target[key], source[key]);
-    }
-  });
-}
-
-// -----------------------------------------------------------------------------
 // SETUP FUNCTIONS
 
 /**
- *
+ * DO I NEED TO DO SOME VALIDATE TING HERE TO MAKE SURE ALL REQUESTS ARE DONE???!?!!?!
  */
 function setupLogin(options, mocks) {
   const defaults = {
@@ -63,7 +46,7 @@ function setupLogin(options, mocks) {
     },
     res: '<html></html>',
   };
-  deepMerge(defaults, options);
+  merge(defaults, options);
 
   const reqs = [{req: defaults.req, res: defaults.res}].concat(mocks || []);
   const uri = defaults.query ? `${LOGIN_PATH}${defaults.query}` : LOGIN_PATH;
@@ -79,9 +62,57 @@ function setupLogin(options, mocks) {
   });
 }
 
-function setupCallback(options, mocks) {
-  // If I want to treat keys like well-known, how do I handle the case
-  // where they keys have changed after they've started their server???!
+function setupCallback(options) {
+  const reqs = [];
+  const kid = 'KID_FOO';
+
+  // 1. /oauth2/v1/token
+
+  // Here, I should be able to specify:
+  // 1. Basic Auth clientId/secret vs. these in post body (but not both!)
+  // 2. Params in query, or in body
+  //
+  // Maybe instead of just URI, I can specify query parameters when I'm talking
+  // about the endpoint, and it can handle it on the backend? Already doing
+  // this a little with "query"... but need some extra validation?
+
+  /**
+   * - Always pass either post or query through "query" - let's actually call it "params" like backend?
+   * - In mock-okta, we can accept both, and write a note saying that this is how the backend works
+   * - Do extra validation for this request? Has to either be through header or post
+   *   - How do we specify this in a unit test though? This is more like mock-okta test...
+   *   - Maybe we can catch the error and try the test again with the other method?!
+   *   - Need a test to make sure client_secret isn't passed through query?
+   * - Rename query to params? Verify this is what java calls it
+   */
+
+  const req = options.req || {};
+  if (!req.url) {
+    req.url = '/oauth2/v1/token';
+  }
+  req.query = merge({
+    grant_type: 'authorization_code',
+    code: 'GOOD_CODE',
+    redirect_uri: 'http://localhost:3000/authorization-code/callback',
+  }, options.query || {});
+
+  const res = {
+    access_token: 'SOME_TOKEN',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    scope: 'openid email profile',
+    id_token: createIdToken(options.idToken, kid),
+  };
+  merge(res, options.res);
+  reqs.push({ req, res });
+
+  return setupLogin(options, reqs).then((test) => {
+    return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${test.state}`)
+    .send()
+    .then((res) => {
+      return res;
+    });
+  });
 }
 
 
@@ -235,35 +266,17 @@ describe('Authorization Code', () => {
   });
 
   describe('GET /authorization-code/callback', () => {
-    // function setupLogin() {
-    //   const agent = util.agent();
-    //   const reqs = [{
-    //     req: {
-    //       url: '/oauth2/v1/authorize',
-    //     },
-    //     res: '<html></html>',
-    //   }];
-
-    //   return util.mockOktaRequest(reqs)
-    //   .then(() => agent.get(LOGIN_PATH).send())
-    //   .then((res) => {
-    //     const redirect = res.redirects[0];
-    //     const query = url.parse(redirect, true).query;
-    //     return {agent, query};
-    //   });
-    // }
-
-    describe('Validating incoming /callback request', () => {
+   describe('Validating incoming /callback request', () => {
       it('returns 403 if no query "state"', () => {
         const req = util.request()
           .get(`${CALLBACK_PATH}?code=SOME_CODE`)
           .send();
         return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
       });
-      it.only('returns 403 if query "state" does not match original "state"', () => {
+      it('returns 403 if query "state" does not match original "state"', () => {
         return setupLogin().then((test) => {
           const req = test.agent
-            .get(`${CALLBACK_PATH}?state=${test.state}&code=SOME_CODE`)
+            .get(`${CALLBACK_PATH}?state=BAD_STATE&code=SOME_CODE`)
             .send();
           return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
         });
@@ -271,17 +284,21 @@ describe('Authorization Code', () => {
       it('returns 401 if query "code" is not set', () => {
         const req = util.request()
           .get(`${CALLBACK_PATH}?state=SOME_STATE`)
-          .set('Cookie', 'okta-oauth-nonce=SOME_NONCE;okta-oauth-state=SOME_STATE')
           .send();
-        return util.should401(req, errors.CODE_QUERY_CODE_MISSING);
+        return util.should403(req, errors.CODE_QUERY_CODE_MISSING);
       });
     });
 
     describe('Getting id_token via /oauth2/v1/token', () => {
-      it('constructs the /token request with the correct query params', () => {
-        const mock = { keysOptional: true };
-        const req = mockOktaRequests(mock).then(validateCallback);
+      it.only('constructs the /token request with the correct query params', () => {
+        // Okay, getting error with accessToken - maybe I need to actually do
+        // it for real now?
+        const req = setupCallback({});
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
+        // setupCallback
+        // const mock = { keysOptional: true };
+        // const req = mockOktaRequests(mock).then(validateCallback);
+        // return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
       });
       it('is a POST', () => {
         const mock = util.expand('req.method', 'POST');

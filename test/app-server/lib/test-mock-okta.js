@@ -30,9 +30,11 @@
 
 const http = require('http');
 const url = require('url');
+const merge = require('lodash.merge');
 
 const config = require('../../../.samples.config.json');
 const wellKnownResponse = require('./well-known');
+const keys1 = require('./keys1');
 
 let mocks = [];
 let log = [];
@@ -56,7 +58,7 @@ function sendResponse(req, res, body) {
     },
     res: body,
   });
-  
+
   if (typeof body === 'object') {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify(body, null, 2));
@@ -99,6 +101,14 @@ function handleWellKnownRequest(req, res) {
   sendResponse(req, res, wellKnownResponse);
 }
 
+function handleKeysRequest(req, res) {
+  const json = {
+    keys: [keys1.publicJwk],
+  };
+  json.keys[0].kid = 'KID_FOO';
+  sendResponse(req, res, json);
+}
+
 function validateReq(expected, req) {
   Object.keys(expected).forEach((key) => {
     if (key === 'url' || key === 'query') {
@@ -136,7 +146,14 @@ function nextMatchingRequest(req) {
   // 3. Check query parameters
   const expectedQuery = expected.req.query || {};
   const expectedKeys = Object.keys(expectedQuery);
-  const parsedQuery = parsed.query;
+
+  // The backend does not distinguish between query or post params
+  let parsedQuery = parsed.query;
+  if (req.method === 'POST') {
+    console.log("POST PARAMS?!");
+    console.log(req.body);
+    // parsedQuery = merge(parsedQuery, req.body);
+  }
   const parsedKeys = Object.keys(parsedQuery);
 
   // 3.1 Check that all query parameters have the expected values
@@ -205,7 +222,9 @@ const server = http.createServer((req, res) => {
       return handleLogRequest(res);
     case '/.well-known/openid-configuration':
       return handleWellKnownRequest(req, res);
-    default:
+    case '/oauth2/v1/keys':
+      return handleKeysRequest(req, res);
+   default:
       return handleNextRequest(req, res);
   }
 });

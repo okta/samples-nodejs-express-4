@@ -115,7 +115,7 @@ exports.CODE_INVALID_QUERY_STATE = `
 `;
 
 exports.CODE_QUERY_CODE_MISSING = `
-      The /authorization-code/callback endpoint should return status code 401 if
+      The /authorization-code/callback endpoint should return status code 403 if
       no "code" query param is sent.
 
       Validate that the "code" query parameter is present.

@@ -20,7 +20,7 @@
     "prestart": "node tools/copy-static",
     "test:e2e": "webdriver-manager update && protractor test/e2e/conf.js",
     "test:mock-okta": "node test/app-server/lib/test-mock-okta",
-    "test:app-server": "mocha test/app-server/index --bail --timeout 15000",
+    "test:app-server": "mocha test/app-server/spec-list --bail --no-timeouts",
     "test:app-server-all": "mocha test/app-server/with-app-server-start --timeout 15000"
   },
   "devDependencies": {
@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@okta/samples-js-angular-1": "1.6.0",
+    "body-parser": "^1.16.1",
     "chai": "3.5.0",
     "chai-http": "3.0.0",
     "consolidate": "0.14.1",
