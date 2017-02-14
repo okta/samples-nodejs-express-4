@@ -148,8 +148,8 @@ exports.CODE_TOKEN_INVALID_CONTENT_TYPE = `
 
 exports.CODE_TOKEN_INVALID_HEADER_ACCEPT = `
       The /authorization-code/callback endpoint should make a request to the
-      Okta token endpoint. The /token request should be url encoded. To fix
-      this, set this header:
+      Okta token endpoint. The /token request should specify the response format.
+      To fix this, set this header:
 
       accept: application/json
 `;
@@ -163,6 +163,9 @@ exports.CODE_TOKEN_INVALID_HEADER_CONNECTION = `
 `;
 
 exports.CODE_TOKEN_INVALID_AUTHORIZATION = `
+      NEED TO ADD SOME STUFF HERE ABOUT EITHER DOING THIS, OR POST-ING IT IN
+      THE POST BODY!!!!
+
       The /authorization-code/callback endpoint should make a request to the
       Okta token endpoint. The /token request should send the correct
       authorization header.

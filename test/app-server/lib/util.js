@@ -83,6 +83,23 @@ util.expand = (key, val) => {
   return obj;
 };
 
+util.warn = (msg) => {
+  console.log(`W-A-R-N-> ${msg}`);
+};
+
+util.shouldReturnStatus = (reqPromise, desired, okayList, msg) => {
+  function check(res) {
+    okayList || (okayList = []);
+    if (okayList.indexOf(res.status) > -1) {
+      util.warn(`Ideally we choose statusCode ${desired}, but got the acceptable ${res.status}`);
+    }
+    else if (res.status !== desired) {
+      throw new Error(`Expected response to have statusCode ${desired}, but got ${res.status}\n${msg}`);
+    }
+  }
+  return appendOktaLogOnError(reqPromise.then(check, check));
+};
+
 /**
  * Verifies that the response sets a 401 status code
  */
@@ -275,7 +292,7 @@ util.itLoadsTemplateFor = (docPartial, reqFn) => {
 //   };
 
 //   const agent = util.agent();
-  
+
 //   // 1. /authorization-code/login
 
 

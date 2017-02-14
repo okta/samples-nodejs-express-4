@@ -63,7 +63,7 @@ function setupLogin(options) {
 }
 
 function setupCallback(options) {
-  return setupLogin(options).then((test) => {
+  return setupLogin().then((test) => {
     const reqs = [];
     const kid = 'KID_FOO';
 
@@ -118,7 +118,9 @@ function setupCallback(options) {
       return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${state}`).send();
     })
     .then((res) => {
-      return res;
+      return util.mockVerify().then(() => {
+        return res;
+      });
     });
   });
 }
@@ -298,52 +300,67 @@ describe('Authorization Code', () => {
     });
 
     describe('Getting id_token via /oauth2/v1/token', () => {
-      it.only('constructs the /token request with the correct query params', () => {
+      it('constructs the /token request with the correct query params', () => {
         const req = setupCallback({});
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
       });
       it('is a POST', () => {
         const mock = util.expand('req.method', 'POST');
-        mock.keysOptional = true;
-        const req = mockOktaRequests(mock).then(validateCallback);
+        const req = setupCallback(mock);
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_METHOD);
       });
       it('sets the "content-type" header to "application/x-www-form-urlencoded"', () => {
         const mock = util.expand('req.headers.content-type', 'application/x-www-form-urlencoded');
-        mock.keysOptional = true;
-        const req = mockOktaRequests(mock).then(validateCallback);
+        const req = setupCallback(mock);
         return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_CONTENT_TYPE);
       });
 
-      // Note: This currently assumes that our app servers will use
-      // 'client_secret_basic' as the auth method. Update this when we add
-      // mock-okta support for 'client_secret_post'.
+      // - Need to update CODE_TOKEN_INVALID_AUTHORIZATION error message
+      // - Need to test the basic auth case as well. Maybe we get this for
+      //   the normal dev server if we choose not to port this over there
       it('uses basic auth for the authorization header', () => {
-        const secret = new Buffer(`${config.oidc.clientId}:${config.oidc.clientSecret}`, 'utf8').toString('base64');
-        const mock = util.expand('req.headers.authorization', `Basic ${secret}`);
-        mock.keysOptional = true;
-        const req = mockOktaRequests(mock).then(validateCallback);
-        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_AUTHORIZATION);
+        // 1. Basic auth in the authorization header
+        function tryBasicAuth() {
+          const secret = new Buffer(`${config.oidc.clientId}:${config.oidc.clientSecret}`, 'utf8').toString('base64');
+          const mock = util.expand('req.headers.authorization', `Basic ${secret}`);
+          const req = setupCallback(mock);
+          return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_AUTHORIZATION);
+        }
+
+        // 2. Passing client_id and client_secret in the POST body
+        function tryPostBody() {
+          const mock = {
+            query: {
+              client_id: config.oidc.clientId,
+              client_secret: config.oidc.clientSecret,
+            }
+          };
+          const req = setupCallback(mock);
+          return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_AUTHORIZATION);
+        }
+
+        return tryBasicAuth().catch(tryPostBody);
       });
 
-      it('sets the "accept" header to "application/json"', () => {
-        const mock = util.expand('req.headers.accept', 'application/json');
-        mock.keysOptional = true;
-        const req = mockOktaRequests(mock).then(validateCallback);
-        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_ACCEPT);
-      });
-
-      it('sets the "connection" header to "close"', () => {
-        const mock = util.expand('req.headers.connection', 'close');
-        mock.keysOptional = true;
-        const req = mockOktaRequests(mock).then(validateCallback);
-        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_CONNECTION);
-      });
+      // MAKE SURE WE DO NOT CARE ABOUT THESE IN SELENIUM TESTS, AND THEN
+      // JUST REMOVE THIS CODE!!!!!
+      //
+      // it.only('sets the "accept" header to "application/json"', () => {
+      //   const mock = util.expand('req.headers.accept', 'application/json');
+      //   const req = setupCallback(mock);
+      //   return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_ACCEPT);
+      // });
+      // it('sets the "connection" header to "close"', () => {
+      //   const mock = util.expand('req.headers.connection', 'close');
+      //   mock.keysOptional = true;
+      //   const req = mockOktaRequests(mock).then(validateCallback);
+      //   return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_CONNECTION);
+      // });
     });
 
     describe('Redirecting to profile on successful token response', () => {
       it('redirects to /authorization-code/profile', () => {
-        const req = mockOktaRequests({ keysOptional: true }).then(validateCallback);
+        const req = setupCallback({});
         const redirectUri = 'http://localhost:3000/authorization-code/profile';
         return util.shouldRedirect(req, redirectUri, errors.CODE_TOKEN_REDIRECT);
       });
@@ -351,30 +368,40 @@ describe('Authorization Code', () => {
 
     describe('Validating /oauth2/v1/token response', () => {
       describe('General', () => {
-        it('returns 401 if there is an error in the response', () => {
-          const mock = { req: { thisExpectedHeader: 'does_not_exist' }, keysOptional: true };
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_ERROR);
+        it('returns 502 if there is an error in the okta server response', () => {
+          const mock = {req: {thisExpectedHeader: 'does_not_exist'}};
+          const req = setupCallback(mock);
+          return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_ERROR);
         });
-        it('returns 401 if the response does not contain an id_token', () => {
-          const mock = { res: { id_token: null }, keysOptional: true };
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_NO_ID_TOKEN);
+        it('returns 502 if the response does not contain an id_token', () => {
+          const mock = { res: { id_token: null }};
+          const req = setupCallback(mock);
+          return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_NO_ID_TOKEN);
         });
-        it('returns 401 if the idToken is malformed', () => {
-          const mock = { res: { id_token: 'nodots' }, keysOptional: true };
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_BAD_ID_TOKEN);
+        it('returns 502 if the idToken is malformed', () => {
+          const mock = { res: { id_token: 'nodots' }};
+          const req = setupCallback(mock);
+          return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_BAD_ID_TOKEN);
         });
       });
-      describe('Signature', () => {
-        it('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
-          const req = mockOktaRequests({}).then(validateCallback);
-          return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
-        });
+      // THIS IS A BUNCH OF STUFF THAT WE HAVE TO WORK WITH AFTER WE HAVE THE
+      // BASICS DOWN.
+      xdescribe('Signature', () => {
+        // // OKAY, THIS IS THE POINT WHERE WE DIVERGE FROM THE ORIGINAL, BECAUSE
+        // // IT SHOULD BE THE POINT WHERE WE SAY KEYS ARE NOW REQUIRED. HOW
+        // // DO WE CHECK IF THEY'VE MADE A KEYS REQUEST? MAYBE JUST CHECK THE LOG
+        // // AND DO IT THAT WAY?
+        // it.only('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
+        //   const req = setupCallback({});
+        //   // const req = mockOktaRequests({}).then(validateCallback);
+        //   return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
+        // });
         it('returns 401 if the JWT signature is invalid', () => {
+          // Here we actually have missing functionality between the new
+          // code and hte old code! Which is great, now we're getting into the
+          // meat of it.
           const mock = util.expand('idToken.signature', 'invalidSignature');
-          const req = mockOktaRequests(mock).then(validateCallback);
+          const req = setupCallback(mock);
           return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
         });
         it('returns 401 if id_token is signed with an invalid cert', () => {
@@ -411,10 +438,13 @@ describe('Authorization Code', () => {
         });
       });
 
+      // DO THESE CLAIMS FIRST, AND THEN GO BACK TO JWT VALIDATION AFTER SINCE
+      // IT HAS ALL THAT STUFF WITH KEYS
       describe('Claims', () => {
-        it('returns 401 if id_token.nonce does not match the cookie nonce', () => {
+        it.only('returns 401 if id_token.nonce does not match the cookie nonce', () => {
+          // We have to change this one to actually checking the right nonce
           const mock = util.expand('idToken.payload.nonce', 'BAD_NONCE');
-          const req = mockOktaRequests(mock).then(validateCallback);
+          const req = setupCallback(mock);
           return util.should401(req, errors.CODE_TOKEN_BAD_NONCE);
         });
         it('returns 401 if id_token.iss does not match our issuer', () => {
