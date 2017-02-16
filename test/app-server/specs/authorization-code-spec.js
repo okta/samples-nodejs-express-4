@@ -21,6 +21,7 @@ const jws = require('jws');
 const merge = require('lodash.merge');
 const crypto = require('crypto');
 const url = require('url');
+const TestAgent = require('../lib/test-agent');
 
 const LOGIN_PATH = '/authorization-code/login';
 const LOGIN_REDIRECT_PATH = '/authorization-code/login-redirect';
@@ -32,11 +33,15 @@ const LOGOUT_PATH = '/authorization-code/logout';
 // -----------------------------------------------------------------------------
 // SETUP FUNCTIONS
 
-/**
- * DO I NEED TO DO SOME VALIDATE TING HERE TO MAKE SURE ALL REQUESTS ARE DONE???!?!!?!
- */
-function setupLogin(options) {
-  const defaults = {
+function setupAgent() {
+  return new TestAgent(
+    `http://localhost:${config.server.port}`,
+    `http://127.0.0.1:${config.mockOkta.port}`
+  );
+}
+
+function setupLogin(overrides) {
+  const options = {
     query: null,
     req: {
       url: '/oauth2/v1/authorize',
@@ -44,22 +49,102 @@ function setupLogin(options) {
         host: '0.0.0.0:7777'
       },
     },
-    res: '<html></html>',
+    res: '<html></html>'
   };
-  merge(defaults, options);
+  merge(options, overrides);
 
-  const reqs = [{req: defaults.req, res: defaults.res}];
-  const uri = defaults.query ? `${LOGIN_PATH}${defaults.query}` : LOGIN_PATH;
+  const reqs = [{req: options.req, res: options.res}];
+  const uri = options.query ? `${LOGIN_PATH}${options.query}` : LOGIN_PATH;
 
-  const agent = util.agent();
-  return util.mockOktaRequest(reqs)
-  .then(() => agent.get(uri).send())
-  .then((res) => {
-    // What happens if I'm not doing the redirect??!? Do I fail out beforehand?
-    const redirect = res.redirects[0];
-    const query = url.parse(redirect, true).query;
-    return {agent, res, state: query.state, nonce: query.nonce};
+  return setupAgent().mock(reqs).get(uri);
+}
+
+
+function thisIsWhatWeAreDoing() {
+  const agent = setupAgent().mock(reqs).get(url);
+  agent.processLast((res) => {
+    agent.get('foo');
   });
+  return agent.shouldNotError();
+}
+
+
+function setupRedirect(overrides) {
+  const agent = setupLogin();
+
+  // problem is that order is:
+  // 1. setupLogin -> agent
+  // 2. agent.shouldNotError
+  // 3. Then the stuff here....
+  // agent.afterLast((res) => {
+
+
+
+  // });
+
+  // agent.processLast((res) => {
+  // });
+
+  agent.last.then((res) => {
+    const authorizeQuery = url.parse(res.redirect[0], true).query;
+    const options = {
+      query: {
+        grant_type: 'authorization_code2',
+        code: 'GOOD_CODE',
+        redirect_uri: 'http://localhost:3000/authorization-code/callback'
+      },
+      req: {
+        url: '/oauth2/v1/token'
+      },
+      res: {
+        access_token: 'SOME_TOKEN',
+        token_type: 'Bearer',
+        expires_in: 3600,
+        scope: 'openid email profile',
+        id_token: undefined
+      },
+      idToken: {
+        header: {
+          alg: 'RS256',
+          kid: 'KID_FOO'
+        },
+        payload: {
+          sub: '00ukz6E06vtrGDVn90g3',
+          name: 'John Adams',
+          email: 'john@acme.com',
+          ver: 1,
+          iss: 'http://0.0.0.0:7777',
+          aud: config.oidc.clientId,
+          iat: 1478388232,
+          exp: Math.floor(new Date().getTime() / 1000) + 3600,
+          jti: 'ID.XaR6tP7oHKkw81lQaap0CICytGPvxfSNH0f4zJy2C1g',
+          amr: 'pwd',
+          idp: '00okosaVJPYJkSwVk0g3',
+          nonce: authorizeQuery.nonce,
+          preferred_username: 'john@acme.com',
+          auth_time: 1478388232,
+          at_hash: 'n-Hk6KbagtcDdarKOVyAKQ'
+        },
+        secret: keys1.privatePem
+      },
+      signature: null
+    };
+
+    merge(options, overrides);
+
+    if (typeof options.res.id_token === 'undefined') {
+      let idToken = jws.sign(options.idToken);
+      if (options.signature) {
+        idToken = idToken.slice(0, idToken.lastIndexOf('.') + 1) + options.signature;
+      }
+      options.res.id_token = idToken;
+    }
+
+    agent.mock({req: options.req, res: options.res});
+    agent.get(`${CALLBACK_PATH}?code=GOOD_CODE&state=${authorizeQuery.state}`);
+  });
+
+  return agent;
 }
 
 function setupCallback(options) {
@@ -96,18 +181,18 @@ function setupCallback(options) {
       redirect_uri: 'http://localhost:3000/authorization-code/callback',
     }, options.query || {});
 
-    options.idToken = {
-      payload: {
-        nonce: test.nonce
-      }
-    };
+    let nonce = test.nonce;
+    if (options && options.idToken && options.idToken.payload && options.idToken.payload.nonce) {
+      nonce = options.idToken.payload.nonce;
+      delete options.idToken.payload.nonce;
+    }
 
     const res = {
       access_token: 'SOME_TOKEN',
       token_type: 'Bearer',
       expires_in: 3600,
       scope: 'openid email profile',
-      id_token: createIdToken(options.idToken, kid),
+      id_token: createIdToken(options.idToken, nonce, kid),
     };
     merge(res, options.res);
     reqs.push({ req, res });
@@ -144,7 +229,7 @@ function randomKid() {
   return crypto.randomBytes(16).toString('hex');
 }
 
-function createIdToken(opts, kid) {
+function createIdToken(opts, nonce, kid) {
   const options = opts || {};
   const jwsOptions = {
     header: {
@@ -163,7 +248,7 @@ function createIdToken(opts, kid) {
       jti: 'ID.XaR6tP7oHKkw81lQaap0CICytGPvxfSNH0f4zJy2C1g',
       amr: 'pwd',
       idp: '00okosaVJPYJkSwVk0g3',
-      nonce: 'SOME_NONCE',
+      nonce: nonce,
       preferred_username: 'john@acme.com',
       auth_time: 1478388232,
       at_hash: 'n-Hk6KbagtcDdarKOVyAKQ',
@@ -228,6 +313,16 @@ function createSession() {
   return req.then(() => agent);
 }
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
 describe('Authorization Code', () => {
   describe('GET /authorization-code/login-redirect', () => {
     util.itLoadsTemplateFor('login-redirect', () => util.get(LOGIN_REDIRECT_PATH));
@@ -239,9 +334,11 @@ describe('Authorization Code', () => {
 
   describe('GET /authorization-code/login', () => {
     function expectRedirect(options, msg) {
+      // http://0.0.0.0 comes from our mocked /well-known.js response. These
+      // tests will verify that we are pulling from this response rather than
+      // hardcoding the authorizeUrl from the config.
       const base = 'http://0.0.0.0:7777/oauth2/v1/authorize';
-      const promise = setupLogin(options).then(test => test.res);
-      return util.shouldRedirectToBase(promise, base, msg);
+      return setupLogin(options).redirectsToBase(base, msg);
     }
 
     it('redirects to the authorization_endpoint url discovered in .well-known', () => {
@@ -277,32 +374,28 @@ describe('Authorization Code', () => {
 
   describe('GET /authorization-code/callback', () => {
    describe('Validating incoming /callback request', () => {
-      it('returns 403 if no query "state"', () => {
-        const req = util.request()
+      it.only('returns 403 if no query "state"', () => {
+        return setupLogin()
           .get(`${CALLBACK_PATH}?code=SOME_CODE`)
-          .send();
-        return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
+          .should403(errors.CODE_INVALID_QUERY_STATE);
       });
       it('returns 403 if query "state" does not match original "state"', () => {
-        return setupLogin().then((test) => {
-          const req = test.agent
-            .get(`${CALLBACK_PATH}?state=BAD_STATE&code=SOME_CODE`)
-            .send();
-          return util.should403(req, errors.CODE_INVALID_QUERY_STATE);
-        });
+        return setupLogin()
+          .get(`${CALLBACK_PATH}?state=BAD_STATE&code=SOME_CODE`)
+          .should403(errors.CODE_INVALID_QUERY_STATE);
       });
-      it('returns 401 if query "code" is not set', () => {
-        const req = util.request()
+      it('returns 403 if query "code" is not set', () => {
+        return setupLogin()
           .get(`${CALLBACK_PATH}?state=SOME_STATE`)
-          .send();
-        return util.should403(req, errors.CODE_QUERY_CODE_MISSING);
+          .should403(errors.CODE_QUERY_CODE_MISSING);
       });
     });
 
     describe('Getting id_token via /oauth2/v1/token', () => {
       it('constructs the /token request with the correct query params', () => {
-        const req = setupCallback({});
-        return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
+        // const req = setupCallback({});
+        // return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_URL);
+        return setupRedirect().shouldNotError(errors.CODE_TOKEN_INVALID_URL);
       });
       it('is a POST', () => {
         const mock = util.expand('req.method', 'POST');
@@ -345,7 +438,7 @@ describe('Authorization Code', () => {
       // MAKE SURE WE DO NOT CARE ABOUT THESE IN SELENIUM TESTS, AND THEN
       // JUST REMOVE THIS CODE!!!!!
       //
-      // it.only('sets the "accept" header to "application/json"', () => {
+      // it('sets the "accept" header to "application/json"', () => {
       //   const mock = util.expand('req.headers.accept', 'application/json');
       //   const req = setupCallback(mock);
       //   return util.shouldNotError(req, errors.CODE_TOKEN_INVALID_HEADER_ACCEPT);
@@ -391,7 +484,7 @@ describe('Authorization Code', () => {
         // // IT SHOULD BE THE POINT WHERE WE SAY KEYS ARE NOW REQUIRED. HOW
         // // DO WE CHECK IF THEY'VE MADE A KEYS REQUEST? MAYBE JUST CHECK THE LOG
         // // AND DO IT THAT WAY?
-        // it.only('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
+        // it('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
         //   const req = setupCallback({});
         //   // const req = mockOktaRequests({}).then(validateCallback);
         //   return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
@@ -440,17 +533,33 @@ describe('Authorization Code', () => {
 
       // DO THESE CLAIMS FIRST, AND THEN GO BACK TO JWT VALIDATION AFTER SINCE
       // IT HAS ALL THAT STUFF WITH KEYS
+      //
+      // How do I make this easier when I'm writing these tests?!?!
+      // - What I'm writing here, what helper functions
+      // - Getting a reasonable error message
+      // - Writing out requests that are made to test okta server
+      // - Helper functions for statusCodes
+      //
+      // I should solve these before I solve all my issues, so I can make it
+      // easier for myself, and test that it actually helps when debugging!
       describe('Claims', () => {
-        it.only('returns 401 if id_token.nonce does not match the cookie nonce', () => {
-          // We have to change this one to actually checking the right nonce
+        it('returns 502 if id_token.nonce does not match the cookie nonce', () => {
           const mock = util.expand('idToken.payload.nonce', 'BAD_NONCE');
           const req = setupCallback(mock);
-          return util.should401(req, errors.CODE_TOKEN_BAD_NONCE);
+          return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_BAD_NONCE);
         });
-        it('returns 401 if id_token.iss does not match our issuer', () => {
+        it('returns 502 if id_token.iss does not match our issuer', () => {
+          // Returns a lot more responses than expected? Am I not clearing them??
+          // No, I only clear on SUCCESS!!!!
+          //
+          // How should I order my tests so that they are consistent?
+          //
+          // 1. For each test, start a session. In that session, I clear any previous logs
+          // 2. Set the requests for the session. I can add to this if I want, no problem
+          // 3. At end of test, check that all required calls have been made...
           const mock = util.expand('idToken.payload.iss', 'BAD_ISSUER');
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_BAD_ISSUER);
+          const req = setupCallback(mock);
+          return util.shouldReturnStatus(req, 502, [501], errors.CODE_TOKEN_BAD_ISSUER);
         });
         it('returns 401 if id_token.aud does not match our clientId', () => {
           const mock = util.expand('idToken.payload.aud', 'NOT_CONFIGURED_CLIENT_ID');

@@ -17,6 +17,7 @@ const chaiHttp = require('chai-http');
 const url = require('url');
 const config = require('../../../.samples.config.json');
 const errors = require('./errors');
+const TestAgent = require('./test-agent');
 
 const expect = chai.expect;
 const util = module.exports = {};
@@ -24,6 +25,17 @@ const baseAppUrl = `http://localhost:${config.server.port}`;
 const baseMockOktaUrl = `http://127.0.0.1:${config.mockOkta.port}`;
 
 chai.use(chaiHttp);
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Simple helper function that wraps chaiHttp's request method.
@@ -35,6 +47,25 @@ util.request = () => chai.request(baseAppUrl);
  * are preserved.
  */
 util.agent = () => chai.request.agent(baseAppUrl);
+
+// Add some comment here. Can probably replace the agent function with this
+// when we're done. Would actually be nice to use the agent for everything,
+// instead of having to call util all the time...
+util.startTestSession = () => {
+  return chai.request(baseMockOktaUrl).get('/mock/clear').send()
+  .then(() => {
+    const agent = chai.request.agent(baseAppUrl);
+
+    // What can I add here to make it nicer?
+
+    return agent;
+  });
+};
+
+util.startTestSession2 = () => {
+  return new TestAgent(baseAppUrl, baseMockOktaUrl);
+};
+
 
 /**
  * Convenience method for GET requests that do not require setting special
@@ -65,6 +96,9 @@ util.mockVerify = () => (
 util.mockLog = () => (
   chai.request(baseMockOktaUrl).post('/mock/log').send()
 );
+util.fetchLogFromMockOktaServer = () => (
+  chai.request(baseMockOktaUrl).post('/mock/log').send()
+);
 
 /**
  * Helper function to construct nested objects.
@@ -87,6 +121,13 @@ util.warn = (msg) => {
   console.log(`W-A-R-N-> ${msg}`);
 };
 
+// util.returnsCode = (desiredCode, alternativeCodes, reqPromise, msg) => {
+
+
+// };
+
+// util.returnsCode = (reqPromise, c)
+
 util.shouldReturnStatus = (reqPromise, desired, okayList, msg) => {
   function check(res) {
     okayList || (okayList = []);
@@ -97,8 +138,18 @@ util.shouldReturnStatus = (reqPromise, desired, okayList, msg) => {
       throw new Error(`Expected response to have statusCode ${desired}, but got ${res.status}\n${msg}`);
     }
   }
-  return appendOktaLogOnError(reqPromise.then(check, check));
+  return addOktaLogOnError(reqPromise.then(check, check));
 };
+
+
+/**
+ * SHOULD I SWAP OUT CHAI-HTTP WITH REQUEST??!?!?!?! Or request-promise. So
+ * that it's easier to think about this, but also to pipe out the response body
+ * since that is probably more useful in the error conditions than just saying
+ * "internal server error".
+ *
+ * Also, evaluate all error messages to make sure I'm saying "502" now
+ */
 
 /**
  * Verifies that the response sets a 401 status code
@@ -117,6 +168,7 @@ util.should401 = (reqPromise, msg) => {
     try {
       expect(res).to.have.status(401);
     } catch (e) {
+      console.log(res);
       throw new Error(`${e.message}\n${msg}`);
     }
   }
@@ -149,7 +201,30 @@ util.should403 = (reqPromise, msg) => {
 };
 
 
+function addOktaLogOnError(reqPromise) {
+  return reqPromise.catch((err) => {
+    return util.fetchLogFromMockOktaServer()
+    .then((res) => {
+      let msg = err;
+      const logs = res.body;
+      if (logs.length) {
+        msg += '\nRequests to the test okta server:\n';
+        logs.forEach((log, i) => {
+          if (i === logs.length - 1) {
+            msg += `[${i}] ` + JSON.stringify(log, null, 2);
+          }
+          else {
+            msg += `[${i}] ${log.req.url}\n`;
+          }
+        });
+      }
+      throw new Error(msg);
+    });
+  });
+}
+
 // ADD SOME DESCRIPTION HERE!
+// ONLY OUTPUT REQ, RES FROM LAST?!
 function appendOktaLogOnError(reqPromise) {
   return reqPromise.catch((err) => {
     return util.mockLog().then((res) => {

@@ -43,24 +43,27 @@ let log = [];
 
 function sendResponse(req, res, body) {
   // Add request and response to log
-  const headers = {};
-  let currentKey;
-  for (let i = 0; i < req.rawHeaders.length; i++) {
-    if (i % 2 === 0) {
-      currentKey = req.rawHeaders[i];
-    } else {
-      headers[currentKey] = req.rawHeaders[i];
+  console.log(`sending response for: ${req.url}`);
+  if (req.url.indexOf('/mock') === -1) {
+    console.log(`Adding to log: ${req.url}`);
+    const headers = {};
+    let currentKey;
+    for (let i = 0; i < req.rawHeaders.length; i++) {
+      if (i % 2 === 0) {
+        currentKey = req.rawHeaders[i];
+      } else {
+        headers[currentKey] = req.rawHeaders[i];
+      }
     }
+    log.push({
+      req: {
+        method: req.method,
+        url: req.url,
+        headers,
+      },
+      res: body,
+    });
   }
-  log.push({
-    req: {
-      method: req.method,
-      url: req.url,
-      headers,
-    },
-    res: body,
-  });
-
   if (typeof body === 'object') {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify(body, null, 2));
@@ -70,16 +73,15 @@ function sendResponse(req, res, body) {
   }
 }
 
+function handleClearRequest(req, res) {
+  log = [];
+  mocks = [];
+  sendResponse(req, res, {});
+}
+
 function handleSetRequest(req, res) {
   mocks = req.body;
   sendResponse(req, res, {});
-  // const chunks = [];
-  // req.on('data', chunk => chunks.push(chunk));
-  // req.on('end', () => {
-  //   mocks = JSON.parse(Buffer.concat(chunks).toString());
-  //   log = [];
-  //   sendResponse(req, res, {});
-  // });
 }
 
 function handleDoneRequest(req, res) {
@@ -97,6 +99,8 @@ function handleDoneRequest(req, res) {
 }
 
 function handleLogRequest(res) {
+  console.log('LOG REQUEST:');
+  console.log(log);
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(log, null, 2));
 }
@@ -217,6 +221,8 @@ function handleNextRequest(req, res) {
 
 function fooHandler(req, res) {
   switch (req.url) {
+    case '/mock/clear':
+      return handleClearRequest(req, res);
     case '/mock/set':
       return handleSetRequest(req, res);
     case '/mock/done':
