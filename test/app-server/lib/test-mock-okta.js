@@ -93,8 +93,6 @@ function handleDoneRequest(req, res) {
   } else {
     res.statusCode = 200;
   }
-  mocks = [];
-  log = [];
   sendResponse(req, res, body);
 }
 
@@ -163,6 +161,9 @@ function nextMatchingRequest(req) {
   }
   const parsedKeys = Object.keys(parsedQuery);
 
+  console.log(expectedQuery);
+  console.log(parsedQuery);
+
   // 3.1 Check that all query parameters have the expected values
   expectedKeys.forEach((key) => {
     const expectedVal = expectedQuery[key];
@@ -210,6 +211,8 @@ function handleNextRequest(req, res) {
     validateReq(nextRequest.req, req);
     body = nextRequest.res;
   } catch (e) {
+    console.log('got an error');
+    console.log(e.message);
     res.statusCode = 500;
     body = {
       error: 'Expectation not met',

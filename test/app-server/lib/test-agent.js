@@ -28,31 +28,26 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 
-// Each function should:
-// x Add error message if does not satisfy verify function
-// ? Add logs from request chain
-// - Remove logging stuff from test-mock-okta!
-// - Add verification of mocks? Do we actually know it?? Sure. We can at least
-//   check the request uri's themselves, that should tell enough of the story
-// Actually, we don't know because we only know where we're starting from, rather
-// than what is being sent in the backchannel by the server.
-function resolveWith(agent, errorMsg, verifyFn) {
-  return agent.last
+function pendingHelper(agent, prevRes) {
+  const next = Promise.resolve(agent.pending.shift().call(agent, prevRes));
+  if (agent.pending.length === 0) {
+    return next;
+  }
+  return next.then((res) => pendingHelper(agent, res));
+}
+
+function run(agent, errorMsg, verifyFn) {
+  return pendingHelper(agent)
   .then(verifyFn, verifyFn)
-  // .then(() => {
-  //   // Do some verification here of whether we made all requests we were
-  //   // expecting... Question is do we check the test mock-okta server since
-  //   // it already has a queue of things, or do we check against our mocks
-  //   // and requests we've made? Maybe better here because we can clear and
-  //   // add to the mocks at any time in this test session.
-  //   //
-  //   // OKAY, HERE we're going to actually just call the test mock logger here,
-  //   // and deal with that. No worries. <-- here we are
-  // })
+  .then(() => agent.mockAgent.get('/mock/done'))
   .catch((err) => {
-    return chai.request(agent.baseMockUrl).post('/mock/log').send()
+    let msg = `${err.message}`;
+    // if (err.response && err.response.text) {
+    //   msg += `. ${err.response.text}`;
+    // }
+    msg += `\n${errorMsg}\n`;
+    return agent.mockAgent.get('/mock/log').send()
     .then((res) => {
-      let msg = `${err.message}\n${errorMsg}`;
       const logs = res.body;
       if (logs.length) {
         msg += '\nRequests to the test okta server:\n';
@@ -70,6 +65,40 @@ function resolveWith(agent, errorMsg, verifyFn) {
   });
 }
 
+// function resolveWith(agent, errorMsg, verifyFn) {
+//   return agent.last
+//   .then(verifyFn, verifyFn)
+//   // .then(() => {
+//   //   // Do some verification here of whether we made all requests we were
+//   //   // expecting... Question is do we check the test mock-okta server since
+//   //   // it already has a queue of things, or do we check against our mocks
+//   //   // and requests we've made? Maybe better here because we can clear and
+//   //   // add to the mocks at any time in this test session.
+//   //   //
+//   //   // OKAY, HERE we're going to actually just call the test mock logger here,
+//   //   // and deal with that. No worries. <-- here we are
+//   // })
+//   .catch((err) => {
+//     return chai.request(agent.baseMockUrl).post('/mock/log').send()
+//     .then((res) => {
+//       let msg = `${err.message}\n${errorMsg}`;
+//       const logs = res.body;
+//       if (logs.length) {
+//         msg += '\nRequests to the test okta server:\n';
+//         logs.forEach((log, i) => {
+//           if (i === logs.length - 1) {
+//             msg += `[${i}] ` + JSON.stringify(log, null, 2);
+//           }
+//           else {
+//             msg += `[${i}] ${log.req.url}\n`;
+//           }
+//         });
+//       }
+//       throw new Error(msg);
+//     });
+//   });
+// }
+
 function checkStatusCode(desired, okayList) {
   return (res) => {
     if (okayList.indexOf(res.status) > -1) {
@@ -81,78 +110,71 @@ function checkStatusCode(desired, okayList) {
   };
 }
 
-// function checkStatusCode(reqPromise, desired, okayList) {
-//   function check(res) {
-//     if (okayList.indexOf(res.status) > -1) {
-//       console.log(`[WARN] Ideally, we choose statusCode ${desired}, but got the acceptable ${res.status}`);
-//     }
-//     else if (res.status !== desired) {
-//       throw new Error(`Expected response to have statusCode ${desired}, but got ${res.status}`);
-//     }
-//   }
-//   return reqPromise.then(check, check);
-// }
-
-// Maybe the test agent keeps its own logs here? Why do it on the server and
-// maintain an extra layer of state?
-
-// PLAN:
-// 1. Remove last, and convert it to pending
-// 2. "shouldNotError" just goes off the last one
-// 3. Move to scheduling functions that return promises, not promises
-//    - this way we're also guaranteed it will finish before running something
-//      else, although now we sort of have that baked in, but we can simplify.
-//    - In fact, nothing will run until we can one of the validate
-//      conditions
-// 4. The resolvesWith must expect that the pending array can change
-
 class TestAgent {
 
   constructor(baseAppUrl, baseMockUrl) {
-    this.baseMockUrl = baseMockUrl;
     this.agent = chai.request.agent(baseAppUrl);
-    this.pending = [
-      chai.request(this.baseMockUrl).get('/mock/clear').send()
-    ];
-    this.last = null;
+    this.mockAgent = chai.request.agent(baseMockUrl);
+    this.pending = [];
+    this.next(() => this.mockAgent.get('/mock/clear').send());
   }
 
   mock(reqs) {
-    this.pending.push(chai.request(this.baseMockUrl).post('/mock/set').send(reqs));
-    return this;
+    return this.next(() => this.mockAgent.post('/mock/set').send(reqs));
   }
 
   get(url) {
-    this.last = Promise.all(this.pending).then(() => {
-      return this.agent.get(url).send();
-    });
+    return this.next(() => this.agent.get(url).send());
+  }
+
+  next(actionFn) {
+    this.pending.push(actionFn);
     return this;
   }
 
   post() {}
 
-  afterLast(cb) {
-    // doesn't work because we never schedule the next set of operations
-    this.pending.push(this.last.then(cb));
-
-    // doesn't work because we never schedule the next set of operations
-    // i.e. this.last is outdated after we run the process command!
-    this.last = this.last.then(cb);
-  }
-
   should403(errDetail) {
-    return resolveWith(this, errDetail, checkStatusCode(401, [403]));
+    return run(this, errDetail, checkStatusCode(403, [401]));
   }
 
-  // Do I need this??!!?!?!?
-  // Also, should I be using err.response.text in my stuff like in the original
-  // shouldNotError function??!?!!?
+  should502(errDetail) {
+    return run(this, errDetail, checkStatusCode(502, [500]));
+  }
+
   shouldNotError(errDetail) {
-    return resolveWith(this, errDetail, () => {});
+    return run(this, errDetail, (res) => {
+      if (res.status < 400) {
+        return;
+      }
+      let msg = `Expected non-error response, but got ${res.status}\n`;
+      if (res.response && res.response.text) {
+        let text = res.response.text;
+        // Replace if server returns an html stacktrace
+        text = text.replace(/<br\s*\/?>/g, '\n');
+        text = text.replace(/&nbsp;/g, ' ');
+        msg += text;
+      }
+      throw new Error(msg);
+    });
+  }
+
+  redirectsTo(url, errDetail) {
+    return run(this, errDetail, (res) => {
+      const redirects = res.redirects || [];
+      const matches = redirects.filter((i) => i === url);
+      if (!matches.length) {
+        let msg = `Expected redirect to "${url}"`;
+        if (redirects.length) {
+          msg += `, but got: ${redirects}`;
+        }
+        throw new Error(msg);
+      }
+    });
   }
 
   redirectsToBase(base, errDetail) {
-    return resolveWith(this, errDetail, (res) => {
+    return run(this, errDetail, (res) => {
       const redirects = res.redirects || [];
       const matches = redirects.filter((url) => url.indexOf(base) > -1);
       if (!matches.length) {
