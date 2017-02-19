@@ -29,11 +29,22 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 
 function pendingHelper(agent, prevRes) {
-  const next = Promise.resolve(agent.pending.shift().call(agent, prevRes));
+  const next = agent.pending.shift();
+  const promise = Promise.resolve(next.fn.call(agent, prevRes));
+
+  console.log('running pending:');
+  console.log(next.details);
+
   if (agent.pending.length === 0) {
-    return next;
+    return promise;
   }
-  return next.then((res) => pendingHelper(agent, res));
+  return promise.then(res => pendingHelper(agent, res));
+
+  // const next = Promise.resolve(agent.pending.shift().call(agent, prevRes));
+  // if (agent.pending.length === 0) {
+  //   return next;
+  // }
+  // return next.then((res) => pendingHelper(agent, res));
 }
 
 function run(agent, errorMsg, verifyFn) {
@@ -42,9 +53,9 @@ function run(agent, errorMsg, verifyFn) {
   .then(() => agent.mockAgent.get('/mock/done'))
   .catch((err) => {
     let msg = `${err.message}`;
-    // if (err.response && err.response.text) {
-    //   msg += `. ${err.response.text}`;
-    // }
+    if (err.response && err.response.text) {
+      msg += `. ${err.response.text}`;
+    }
     msg += `\n${errorMsg}\n`;
     return agent.mockAgent.get('/mock/log').send()
     .then((res) => {
@@ -116,19 +127,21 @@ class TestAgent {
     this.agent = chai.request.agent(baseAppUrl);
     this.mockAgent = chai.request.agent(baseMockUrl);
     this.pending = [];
-    this.next(() => this.mockAgent.get('/mock/clear').send());
+    this.next(() => this.mockAgent.get('/mock/clear').send(), {type: 'MOCK_CLEAR'});
   }
 
   mock(reqs) {
-    return this.next(() => this.mockAgent.post('/mock/set').send(reqs));
+    const details = {type: 'MOCK_SET', reqs};
+    return this.next(() => this.mockAgent.post('/mock/set').send(reqs), details);
   }
 
   get(url) {
-    return this.next(() => this.agent.get(url).send());
+    const details = {type: 'GET', url};
+    return this.next(() => this.agent.get(url).send(), details);
   }
 
-  next(actionFn) {
-    this.pending.push(actionFn);
+  next(fn, details) {
+    this.pending.push({fn, details});
     return this;
   }
 
@@ -156,6 +169,15 @@ class TestAgent {
         msg += text;
       }
       throw new Error(msg);
+    });
+  }
+
+  shouldNotRedirect(errDetail) {
+    return run(this, errDetail, (res) => {
+      const redirects = res.redirects || [];
+      if (redirects.length) {
+        throw new Error(`Unexpected redirect to "${res.redirects}"`);
+      }
     });
   }
 

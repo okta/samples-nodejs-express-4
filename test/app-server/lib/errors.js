@@ -269,7 +269,7 @@ exports.CODE_TOKEN_BAD_NONCE = `
 
 exports.CODE_TOKEN_BAD_ISSUER = `
       The /authorization-code/callback endpoint should return status code 502 if
-      id_token.iss does not match our okta server "${config.oidc.oktaUrl}"
+      id_token.iss does not match the .well-known issuer "http:0.0.0.0:7777"
 ` + DECODE_CLAIMS;
 
 exports.CODE_TOKEN_BAD_AUD = `

@@ -420,29 +420,28 @@ describe('Authorization Code', () => {
         it('returns 502 if the idToken is malformed', () => {
           const mock = { res: { id_token: 'nodots' }};
           return setupRedirect(mock).should502(errors.CODE_TOKEN_BAD_ID_TOKEN);
-
-          // const req = setupCallback(mock);
-          // return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_BAD_ID_TOKEN);
         });
       });
 
-      describe('Signature', () => {
+      xdescribe('Signature', () => {
         // // OKAY, THIS IS THE POINT WHERE WE DIVERGE FROM THE ORIGINAL, BECAUSE
         // // IT SHOULD BE THE POINT WHERE WE SAY KEYS ARE NOW REQUIRED. HOW
         // // DO WE CHECK IF THEY'VE MADE A KEYS REQUEST? MAYBE JUST CHECK THE LOG
         // // AND DO IT THAT WAY?
-        // it('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
-        //   const req = setupCallback({});
-        //   // const req = mockOktaRequests({}).then(validateCallback);
-        //   return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
-        // });
-        it.only('returns 401 if the JWT signature is invalid', () => {
+        xit('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
+          const req = setupCallback({});
+          // const req = mockOktaRequests({}).then(validateCallback);
+          return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
+        });
+        it('returns 502 if the JWT signature is invalid', () => {
           // Here we actually have missing functionality between the new
           // code and hte old code! Which is great, now we're getting into the
           // meat of it.
           const mock = util.expand('idToken.signature', 'invalidSignature');
-          const req = setupCallback(mock);
-          return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
+          return setupRedirect(mock).should502(errors.CODE_TOKEN_INVALID_SIG);
+
+          // const req = setupCallback(mock);
+          // return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
         });
         it('returns 401 if id_token is signed with an invalid cert', () => {
           const mock = util.expand('idToken.secret', keys2.privatePem);
@@ -478,68 +477,44 @@ describe('Authorization Code', () => {
         });
       });
 
-      // DO THESE CLAIMS FIRST, AND THEN GO BACK TO JWT VALIDATION AFTER SINCE
-      // IT HAS ALL THAT STUFF WITH KEYS
-      //
-      // How do I make this easier when I'm writing these tests?!?!
-      // - What I'm writing here, what helper functions
-      // - Getting a reasonable error message
-      // - Writing out requests that are made to test okta server
-      // - Helper functions for statusCodes
-      //
-      // I should solve these before I solve all my issues, so I can make it
-      // easier for myself, and test that it actually helps when debugging!
       describe('Claims', () => {
-        it('returns 502 if id_token.nonce does not match the cookie nonce', () => {
+        it('returns 502 if id_token.nonce does not match the generated nonce', () => {
           const mock = util.expand('idToken.payload.nonce', 'BAD_NONCE');
-          const req = setupCallback(mock);
-          return util.shouldReturnStatus(req, 502, [500], errors.CODE_TOKEN_BAD_NONCE);
+          return setupRedirect(mock).should502(errors.code_TOKEN_BAD_NONCE);
         });
         it('returns 502 if id_token.iss does not match our issuer', () => {
-          // Returns a lot more responses than expected? Am I not clearing them??
-          // No, I only clear on SUCCESS!!!!
-          //
-          // How should I order my tests so that they are consistent?
-          //
-          // 1. For each test, start a session. In that session, I clear any previous logs
-          // 2. Set the requests for the session. I can add to this if I want, no problem
-          // 3. At end of test, check that all required calls have been made...
           const mock = util.expand('idToken.payload.iss', 'BAD_ISSUER');
-          const req = setupCallback(mock);
-          return util.shouldReturnStatus(req, 502, [501], errors.CODE_TOKEN_BAD_ISSUER);
+          return setupRedirect(mock).should502(errors.CODE_TOKEN_BAD_ISSUER);
         });
-        it('returns 401 if id_token.aud does not match our clientId', () => {
+        it('returns 502 if id_token.aud does not match our clientId', () => {
           const mock = util.expand('idToken.payload.aud', 'NOT_CONFIGURED_CLIENT_ID');
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_BAD_AUD);
+          return setupRedirect(mock).should502(errors.CODE_TOKEN_BAD_AUD);
         });
-        it('returns 401 if the id_token has expired', () => {
+        it('returns 502 if the id_token has expired', () => {
           // Set expiration to 20 minutes ago
           const exp = Math.floor(new Date().getTime() / 1000) - 1200;
           const mock = util.expand('idToken.payload.exp', exp);
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_EXPIRED);
+          return setupRedirect(mock).should502(errors.CODE_TOKEN_EXPIRED);
         });
-        it('accounts for clock skew in expiration check', () => {
+        xit('accounts for clock skew in expiration check', () => {
           // Set expiration to 4 minutes ago
           const exp = Math.floor(new Date().getTime() / 1000) - 240;
           const mock = util.expand('idToken.payload.exp', exp);
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.shouldNotError(req, errors.CODE_TOKEN_EXP_CLOCK_SKEW);
+          return setupRedirect(mock).shouldNotError(errors.CODE_TOKEN_EXP_CLOCK_SKEW);
         });
-        it('returns 401 if the id_token was issued in the future', () => {
+        xit('returns 502 if the id_token was issued in the future', () => {
           // Set issued at time to 20 minutes from now
           const iat = Math.floor(new Date().getTime() / 1000) + 1200;
           const mock = util.expand('idToken.payload.iat', iat);
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.should401(req, errors.CODE_TOKEN_IAT_FUTURE);
+          return setupRedirect(mock).should502(errors.CODE_TOKEN_IAT_FUTURE);
+          // const req = mockOktaRequests(mock).then(validateCallback);
+          // return util.should401(req, errors.CODE_TOKEN_IAT_FUTURE);
         });
         it('accounts for clock skew in issued at check', () => {
           // Set issued at time to 4 minutes from now
           const iat = Math.floor(new Date().getTime() / 1000) + 240;
           const mock = util.expand('idToken.payload.iat', iat);
-          const req = mockOktaRequests(mock).then(validateCallback);
-          return util.shouldNotError(req, errors.CODE_TOKEN_IAT_CLOCK_SKEW);
+          return setupRedirect(mock).shouldNotError(errors.CODE_TOKEN_IAT_CLOCK_SKEW);
         });
       });
     });
@@ -548,15 +523,20 @@ describe('Authorization Code', () => {
   describe('GET /authorization-code/profile', () => {
     describe('Before authentication', () => {
       it('redirects to /', () => {
-        const req = util.get(PROFILE_PATH);
-        return util.shouldRedirect(req, 'http://localhost:3000/', errors.CODE_PROFILE_NO_SESSION);
+        const url = 'http://localhost:3000/';
+        return setupAgent().get(PROFILE_PATH).redirectsTo(url, errors.CODE_PROFILE_NO_SESSION);
       });
     });
 
     describe('After authentication and user session is set', () => {
-      it('does not redirect', () => {
-        const req = createSession().then(agent => agent.get(PROFILE_PATH));
-        return util.shouldNotRedirect(req, errors.CODE_PROFILE_NO_REDIRECT);
+      it.only('does not redirect', () => {
+        // Okay, the problem (I think) is that we are doing the get before we
+        // do the setupLogin stuff!!! Should inject in the middle, not in the
+        // end right?
+
+        return setupRedirect().get(PROFILE_PATH).shouldNotRedirect(errors.CODE_PROFILE_NO_REDIRECT);
+        // const req = createSession().then(agent => agent.get(PROFILE_PATH));
+        // return util.shouldNotRedirect(req, errors.CODE_PROFILE_NO_REDIRECT);
       });
       util.itLoadsTemplateFor('profile', () => createSession().then(agent => agent.get(PROFILE_PATH)));
     });
