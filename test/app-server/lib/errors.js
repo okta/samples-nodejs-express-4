@@ -203,14 +203,15 @@ exports.CODE_TOKEN_BAD_ID_TOKEN = `
       the id_token is malformed.
 `;
 
-exports.CODE_KEYS_INVALID_URL = `
-      The /authorization-code/callback endpoint should make a request to
-      /oauth2/v1/keys to get the public key used to validate the id_token
-      signature.
+// I NEED TO ADD THIS INFO SOMEWHERE!!!!!??!
+// exports.CODE_KEYS_INVALID_URL = `
+//       The /authorization-code/callback endpoint should make a request to
+//       /oauth2/v1/keys to get the public key used to validate the id_token
+//       signature.
 
-      Read more about validating id_tokens here:
-      http://developer.okta.com/docs/api/resources/oidc.html#validating-id-tokens
-`;
+//       Read more about validating id_tokens here:
+//       http://developer.okta.com/docs/api/resources/oidc.html#validating-id-tokens
+// `;
 
 exports.CODE_TOKEN_INVALID_SIG = `
       The /authorization-code/callback endpoint should return status code 401 if

@@ -416,26 +416,9 @@ describe.only('Authorization Code', () => {
       });
 
       describe('Signature', () => {
-        // // OKAY, THIS IS THE POINT WHERE WE DIVERGE FROM THE ORIGINAL, BECAUSE
-        // // IT SHOULD BE THE POINT WHERE WE SAY KEYS ARE NOW REQUIRED. HOW
-        // // DO WE CHECK IF THEY'VE MADE A KEYS REQUEST? MAYBE JUST CHECK THE LOG
-        // // AND DO IT THAT WAY?
-        //
-        // WE ALSO HAVE TO ADD THIS TO OUR STRATEGY!!!!
-        xit('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
-          const req = setupCallback({});
-          // const req = mockOktaRequests({}).then(validateCallback);
-          return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
-        });
         xit('returns 502 if the JWT signature is invalid', () => {
-          // Here we actually have missing functionality between the new
-          // code and hte old code! Which is great, now we're getting into the
-          // meat of it.
           const mock = util.expand('idToken.signature', 'invalidSignature');
           return setupRedirect(mock).should502(errors.CODE_TOKEN_INVALID_SIG);
-
-          // const req = setupCallback(mock);
-          // return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
         });
         xit('returns 401 if id_token is signed with an invalid cert', () => {
           const mock = util.expand('idToken.secret', keys2.privatePem);
@@ -471,7 +454,7 @@ describe.only('Authorization Code', () => {
         });
       });
 
-      describe('Claims', () => {
+      describe.only('Claims', () => {
         it('returns 502 if id_token.nonce does not match the generated nonce', () => {
           const mock = util.expand('idToken.payload.nonce', 'BAD_NONCE');
           return setupRedirect(mock).should502(errors.code_TOKEN_BAD_NONCE);
@@ -497,7 +480,7 @@ describe.only('Authorization Code', () => {
           const mock = util.expand('idToken.payload.exp', exp);
           return setupRedirect(mock).shouldNotError(errors.CODE_TOKEN_EXP_CLOCK_SKEW);
         });
-        xit('returns 502 if the id_token was issued in the future', () => {
+        it('returns 502 if the id_token was issued in the future', () => {
           // This is not currently supported in passport-openidconnect
           // Set issued at time to 20 minutes from now
           const iat = Math.floor(new Date().getTime() / 1000) + 1200;
