@@ -61,7 +61,8 @@ function setupLogin(overrides) {
 
 function setupRedirect(overrides) {
   return setupLogin().next(function (res) {
-    const authorizeQuery = url.parse(res.redirects[0], true).query;
+    const authorizeQuery = url.parse(res.headers['location'], true).query;
+
     const options = {
       req: {
         url: '/oauth2/v1/token',
@@ -306,13 +307,13 @@ describe('Authorization Code', () => {
     util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
   });
 
-  describe('GET /authorization-code/login', () => {
+  describe.only('GET /authorization-code/login', () => {
     function expectRedirect(options, msg) {
       // http://0.0.0.0 comes from our mocked /well-known.js response. These
       // tests will verify that we are pulling from this response rather than
       // hardcoding the authorizeUrl from the config.
-      const base = 'http://0.0.0.0:7777/oauth2/v1/authorize';
-      return setupLogin(options).redirectsToBase(base, msg);
+      const url = 'http://0.0.0.0:7777/oauth2/v1/authorize';
+      return setupLogin(options).shouldRedirectTo(url, msg);
     }
 
     it('redirects to the authorization_endpoint url discovered in .well-known', () => {
@@ -529,7 +530,7 @@ describe('Authorization Code', () => {
     });
 
     describe('After authentication and user session is set', () => {
-      it.only('does not redirect', () => {
+      it('does not redirect', () => {
         // Okay, the problem (I think) is that we are doing the get before we
         // do the setupLogin stuff!!! Should inject in the middle, not in the
         // end right?
