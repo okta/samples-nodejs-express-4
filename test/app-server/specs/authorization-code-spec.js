@@ -118,73 +118,74 @@ function setupRedirect(overrides) {
     }
 
     this.mock([{query: options.query, req: options.req, res: options.res}]);
+
     const state = encodeURIComponent(authorizeQuery.state);
     this.get(`${CALLBACK_PATH}?code=GOOD_CODE&state=${state}`);
   });
 }
 
-function setupCallback(options) {
-  return setupLogin().then((test) => {
-    const reqs = [];
-    const kid = 'KID_FOO';
+// function setupCallback(options) {
+//   return setupLogin().then((test) => {
+//     const reqs = [];
+//     const kid = 'KID_FOO';
 
-    // 1. /oauth2/v1/token
+//     // 1. /oauth2/v1/token
 
-    // Here, I should be able to specify:
-    // 1. Basic Auth clientId/secret vs. these in post body (but not both!)
-    // 2. Params in query, or in body
-    //
-    // Maybe instead of just URI, I can specify query parameters when I'm talking
-    // about the endpoint, and it can handle it on the backend? Already doing
-    // this a little with "query"... but need some extra validation?
+//     // Here, I should be able to specify:
+//     // 1. Basic Auth clientId/secret vs. these in post body (but not both!)
+//     // 2. Params in query, or in body
+//     //
+//     // Maybe instead of just URI, I can specify query parameters when I'm talking
+//     // about the endpoint, and it can handle it on the backend? Already doing
+//     // this a little with "query"... but need some extra validation?
 
-    /**
-     * - Always pass either post or query through "query" - let's actually call it "params" like backend?
-     * - In mock-okta, we can accept both, and write a note saying that this is how the backend works
-     * - Do extra validation for this request? Has to either be through header or post
-     *   - How do we specify this in a unit test though? This is more like mock-okta test...
-     *   - Maybe we can catch the error and try the test again with the other method?!
-     *   - Need a test to make sure client_secret isn't passed through query?
-     * - Rename query to params? Verify this is what java calls it
-     */
-    const req = options.req || {};
-    if (!req.url) {
-      req.url = '/oauth2/v1/token';
-    }
-    req.query = merge({
-      grant_type: 'authorization_code',
-      code: 'GOOD_CODE',
-      redirect_uri: 'http://localhost:3000/authorization-code/callback',
-    }, options.query || {});
+//     /**
+//      * - Always pass either post or query through "query" - let's actually call it "params" like backend?
+//      * - In mock-okta, we can accept both, and write a note saying that this is how the backend works
+//      * - Do extra validation for this request? Has to either be through header or post
+//      *   - How do we specify this in a unit test though? This is more like mock-okta test...
+//      *   - Maybe we can catch the error and try the test again with the other method?!
+//      *   - Need a test to make sure client_secret isn't passed through query?
+//      * - Rename query to params? Verify this is what java calls it
+//      */
+//     const req = options.req || {};
+//     if (!req.url) {
+//       req.url = '/oauth2/v1/token';
+//     }
+//     req.query = merge({
+//       grant_type: 'authorization_code',
+//       code: 'GOOD_CODE',
+//       redirect_uri: 'http://localhost:3000/authorization-code/callback',
+//     }, options.query || {});
 
-    let nonce = test.nonce;
-    if (options && options.idToken && options.idToken.payload && options.idToken.payload.nonce) {
-      nonce = options.idToken.payload.nonce;
-      delete options.idToken.payload.nonce;
-    }
+//     let nonce = test.nonce;
+//     if (options && options.idToken && options.idToken.payload && options.idToken.payload.nonce) {
+//       nonce = options.idToken.payload.nonce;
+//       delete options.idToken.payload.nonce;
+//     }
 
-    const res = {
-      access_token: 'SOME_TOKEN',
-      token_type: 'Bearer',
-      expires_in: 3600,
-      scope: 'openid email profile',
-      id_token: createIdToken(options.idToken, nonce, kid),
-    };
-    merge(res, options.res);
-    reqs.push({ req, res });
+//     const res = {
+//       access_token: 'SOME_TOKEN',
+//       token_type: 'Bearer',
+//       expires_in: 3600,
+//       scope: 'openid email profile',
+//       id_token: createIdToken(options.idToken, nonce, kid),
+//     };
+//     merge(res, options.res);
+//     reqs.push({ req, res });
 
-    return util.mockOktaRequest(reqs)
-    .then(() => {
-      const state = encodeURIComponent(test.state);
-      return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${state}`).send();
-    })
-    .then((res) => {
-      return util.mockVerify().then(() => {
-        return res;
-      });
-    });
-  });
-}
+//     return util.mockOktaRequest(reqs)
+//     .then(() => {
+//       const state = encodeURIComponent(test.state);
+//       return test.agent.get(`/authorization-code/callback?code=GOOD_CODE&state=${state}`).send();
+//     })
+//     .then((res) => {
+//       return util.mockVerify().then(() => {
+//         return res;
+//       });
+//     });
+//   });
+// }
 
 
 
@@ -414,17 +415,19 @@ describe.only('Authorization Code', () => {
         });
       });
 
-      xdescribe('Signature', () => {
+      describe('Signature', () => {
         // // OKAY, THIS IS THE POINT WHERE WE DIVERGE FROM THE ORIGINAL, BECAUSE
         // // IT SHOULD BE THE POINT WHERE WE SAY KEYS ARE NOW REQUIRED. HOW
         // // DO WE CHECK IF THEY'VE MADE A KEYS REQUEST? MAYBE JUST CHECK THE LOG
         // // AND DO IT THAT WAY?
+        //
+        // WE ALSO HAVE TO ADD THIS TO OUR STRATEGY!!!!
         xit('makes a request to /oauth2/v1/keys to fetch the public keys', () => {
           const req = setupCallback({});
           // const req = mockOktaRequests({}).then(validateCallback);
           return util.shouldNotError(req, errors.CODE_KEYS_INVALID_URL);
         });
-        it('returns 502 if the JWT signature is invalid', () => {
+        xit('returns 502 if the JWT signature is invalid', () => {
           // Here we actually have missing functionality between the new
           // code and hte old code! Which is great, now we're getting into the
           // meat of it.
@@ -434,17 +437,17 @@ describe.only('Authorization Code', () => {
           // const req = setupCallback(mock);
           // return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
         });
-        it('returns 401 if id_token is signed with an invalid cert', () => {
+        xit('returns 401 if id_token is signed with an invalid cert', () => {
           const mock = util.expand('idToken.secret', keys2.privatePem);
           const req = mockOktaRequests(mock).then(validateCallback);
           return util.should401(req, errors.CODE_TOKEN_INVALID_SIG);
         });
-        it('returns 401 if the token header algorithm does not match the published key algorithm', () => {
+        xit('returns 401 if the token header algorithm does not match the published key algorithm', () => {
           const mock = util.expand('idToken.header.alg', 'none');
           const req = mockOktaRequests(mock).then(validateCallback);
           return util.should401(req, errors.CODE_TOKEN_INVALID_ALG);
         });
-        it('caches responses to /oauth2/v1/keys', () => {
+        xit('caches responses to /oauth2/v1/keys', () => {
           const kid1 = randomKid();
           const kid2 = randomKid();
           const withFirstKid1 = () => (
@@ -488,12 +491,14 @@ describe.only('Authorization Code', () => {
           return setupRedirect(mock).should502(errors.CODE_TOKEN_EXPIRED);
         });
         xit('accounts for clock skew in expiration check', () => {
+          // This is not currently supported in passport-openidconnect
           // Set expiration to 4 minutes ago
           const exp = Math.floor(new Date().getTime() / 1000) - 240;
           const mock = util.expand('idToken.payload.exp', exp);
           return setupRedirect(mock).shouldNotError(errors.CODE_TOKEN_EXP_CLOCK_SKEW);
         });
         xit('returns 502 if the id_token was issued in the future', () => {
+          // This is not currently supported in passport-openidconnect
           // Set issued at time to 20 minutes from now
           const iat = Math.floor(new Date().getTime() / 1000) + 1200;
           const mock = util.expand('idToken.payload.iat', iat);
