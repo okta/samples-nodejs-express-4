@@ -311,7 +311,7 @@ util.shouldNotRedirect = (reqPromise, msg) => (
 util.itLoadsTemplateFor = (docPartial, reqFn) => {
   function hasBodyText(text) {
     return reqFn()
-    .then(res => expect(res.text).to.contain(text))
+    .then(res => expect(res.resBody).to.contain(text))
     .catch(() => {
       const err = `Expected response to contain ${text}`;
       throw new Error(`${err}\n${errors.INVALID_TEMPLATE}`);
@@ -319,10 +319,10 @@ util.itLoadsTemplateFor = (docPartial, reqFn) => {
   }
 
   it('returns status code 200', () => (
-    reqFn().then(res => expect(res).to.have.status(200))
+    reqFn().then(res => expect(res.statusCode).to.equal(200))
   ));
   it('is html', () => (
-    reqFn().then(res => expect(res).to.be.html)
+    reqFn().then(res => expect(res.headers['content-type']).to.contain('text/html'))
   ));
   it('loads sign-in css', () => (
     hasBodyText('<link href="/assets/css/okta-sign-in.min.css" type="text/css" rel="stylesheet"/>')

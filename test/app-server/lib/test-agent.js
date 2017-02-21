@@ -1,7 +1,5 @@
 'use strict';
 
-// I can swap out chai-http easily by just modifying this class!
-
 var url = require('url');
 var request = require('request');
 
@@ -19,20 +17,16 @@ function checkStatusCode(desired, okayList) {
   };
 }
 
-function getRedirect(res) {
-  if (res.statusCode < 301 || res.statusCode >= 400) {
-    return null;
-  }
-  return res.headers.location;
-}
-
 function requestP(options) {
   return new Promise((resolve, reject) => {
-    request(options, (err, res, body) => {
+    request(options, function(err, res, body) {
       if (err) {
         return reject(err);
       }
       res.resBody = body;
+      if (this && this._redirect && this._redirect.redirects) {
+        res.redirects = this._redirect.redirects;
+      }
       if (res.statusCode >= 400) {
         reject(res);
       }
@@ -79,8 +73,7 @@ class TestAgent {
     const options = {
       method: 'GET',
       uri: `${this.baseAppUrl}${path}`,
-      jar: this.jar,
-      followRedirect: false
+      jar: this.jar
     };
     return this.next(() => requestP(options), {type: 'GET', path});
   }
@@ -158,11 +151,11 @@ class TestAgent {
       if (err) {
         throw err;
       }
-      const redirect = getRedirect(res);
-      if (redirect === null) {
+      if (!res.redirects || res.redirects.length === 0) {
         throw new Error(`Expected redirect to ${expectedRedirect}, but no redirect`);
       }
       const expected = url.parse(expectedRedirect);
+      const redirect = res.redirects[0].redirectUri;
       const parsed = url.parse(redirect);
       ['protocol', 'host', 'pathname'].forEach((part) => {
         if (expected[part] !== parsed[part]) {
@@ -178,8 +171,8 @@ class TestAgent {
       if (err) {
         throw err;
       }
-      const redirect = getRedirect(res);
-      if (redirect !== null) {
+      if (res.redirects && res.redirects.length > 0) {
+        const redirect = res.redirects[0].redirectUri;
         throw new Error(`Unexpected redirect to "${redirect}"`);
       }
     };

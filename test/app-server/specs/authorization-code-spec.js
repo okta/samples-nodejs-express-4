@@ -61,7 +61,8 @@ function setupLogin(overrides) {
 
 function setupRedirect(overrides) {
   return setupLogin().next(function (res) {
-    const authorizeQuery = url.parse(res.headers['location'], true).query;
+    const redirect = res.redirects[0].redirectUri;
+    const authorizeQuery = url.parse(redirect, true).query;
 
     const options = {
       req: {
@@ -277,17 +278,6 @@ function mockOktaRequests(options) {
   return util.mockOktaRequest(reqs);
 }
 
-function createSession() {
-  const agent = util.agent();
-  const req = mockOktaRequests({}).then(() => (
-    agent
-      .get(`${CALLBACK_PATH}?state=SOME_STATE&code=SOME_CODE`)
-      .set('Cookie', 'okta-oauth-nonce=SOME_NONCE;okta-oauth-state=SOME_STATE')
-      .send()
-  ));
-  return req.then(() => agent);
-}
-
 
 
 
@@ -298,16 +288,16 @@ function createSession() {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-describe('Authorization Code', () => {
+describe.only('Authorization Code', () => {
   describe('GET /authorization-code/login-redirect', () => {
-    util.itLoadsTemplateFor('login-redirect', () => util.get(LOGIN_REDIRECT_PATH));
+    util.itLoadsTemplateFor('login-redirect', () => setupAgent().get(LOGIN_REDIRECT_PATH).run());
   });
 
   describe('GET /authorization-code/login-custom', () => {
-    util.itLoadsTemplateFor('login-custom', () => util.get(LOGIN_CUSTOM_PATH));
+    util.itLoadsTemplateFor('login-custom', () => setupAgent().get(LOGIN_CUSTOM_PATH).run());
   });
 
-  describe.only('GET /authorization-code/login', () => {
+  describe('GET /authorization-code/login', () => {
     function expectRedirect(options, msg) {
       // http://0.0.0.0 comes from our mocked /well-known.js response. These
       // tests will verify that we are pulling from this response rather than
@@ -404,7 +394,7 @@ describe('Authorization Code', () => {
     describe('Redirecting to profile on successful token response', () => {
       it('redirects to /authorization-code/profile', () => {
         const redirectUrl = 'http://localhost:3000/authorization-code/profile';
-        return setupRedirect().redirectsTo(redirectUrl, errors.CODE_TOKEN_REDIRECT);
+        return setupRedirect().shouldRedirectTo(redirectUrl, errors.CODE_TOKEN_REDIRECT);
       });
     });
 
@@ -525,34 +515,29 @@ describe('Authorization Code', () => {
     describe('Before authentication', () => {
       it('redirects to /', () => {
         const url = 'http://localhost:3000/';
-        return setupAgent().get(PROFILE_PATH).redirectsTo(url, errors.CODE_PROFILE_NO_SESSION);
+        return setupAgent().get(PROFILE_PATH).shouldRedirectTo(url, errors.CODE_PROFILE_NO_SESSION);
       });
     });
 
     describe('After authentication and user session is set', () => {
       it('does not redirect', () => {
-        // Okay, the problem (I think) is that we are doing the get before we
-        // do the setupLogin stuff!!! Should inject in the middle, not in the
-        // end right?
-
         return setupRedirect().get(PROFILE_PATH).shouldNotRedirect(errors.CODE_PROFILE_NO_REDIRECT);
-        // const req = createSession().then(agent => agent.get(PROFILE_PATH));
-        // return util.shouldNotRedirect(req, errors.CODE_PROFILE_NO_REDIRECT);
       });
-      util.itLoadsTemplateFor('profile', () => createSession().then(agent => agent.get(PROFILE_PATH)));
+      util.itLoadsTemplateFor('profile', () => setupRedirect().get(PROFILE_PATH).run());
     });
   });
 
   describe('GET /authorization-code/logout', () => {
-    it('destroys the session', () => {
-      const req = createSession().then(agent => (
-        agent.get(LOGOUT_PATH).then(() => agent.get(PROFILE_PATH))
-      ));
-      return util.shouldRedirect(req, 'http://localhost:3000/', errors.CODE_LOGOUT_SESSION);
-    });
     it('redirects to /', () => {
-      const req = createSession().then(agent => agent.get(LOGOUT_PATH));
-      return util.shouldRedirect(req, 'http://localhost:3000/', errors.CODE_LOGOUT_REDIRECT);
+      return setupRedirect()
+        .get(LOGOUT_PATH)
+        .shouldRedirectTo('http://localhost:3000', errors.CODE_LOGOUT_REDIRECT);
+    });
+    it('destroys the session', () => {
+      return setupRedirect()
+        .get(LOGOUT_PATH)
+        .get(PROFILE_PATH)
+        .shouldRedirectTo('http://localhost:3000', errors.CODE_LOGOUT_SESSION);
     });
   });
 });
