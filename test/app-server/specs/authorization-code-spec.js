@@ -415,8 +415,8 @@ describe.only('Authorization Code', () => {
         });
       });
 
-      describe('Signature', () => {
-        xit('returns 502 if the JWT signature is invalid', () => {
+      describe.only('Signature', () => {
+        it.only('returns 502 if the JWT signature is invalid', () => {
           const mock = util.expand('idToken.signature', 'invalidSignature');
           return setupRedirect(mock).should502(errors.CODE_TOKEN_INVALID_SIG);
         });
@@ -454,7 +454,7 @@ describe.only('Authorization Code', () => {
         });
       });
 
-      describe.only('Claims', () => {
+      describe('Claims', () => {
         it('returns 502 if id_token.nonce does not match the generated nonce', () => {
           const mock = util.expand('idToken.payload.nonce', 'BAD_NONCE');
           return setupRedirect(mock).should502(errors.code_TOKEN_BAD_NONCE);
@@ -481,13 +481,10 @@ describe.only('Authorization Code', () => {
           return setupRedirect(mock).shouldNotError(errors.CODE_TOKEN_EXP_CLOCK_SKEW);
         });
         it('returns 502 if the id_token was issued in the future', () => {
-          // This is not currently supported in passport-openidconnect
           // Set issued at time to 20 minutes from now
           const iat = Math.floor(new Date().getTime() / 1000) + 1200;
           const mock = util.expand('idToken.payload.iat', iat);
           return setupRedirect(mock).should502(errors.CODE_TOKEN_IAT_FUTURE);
-          // const req = mockOktaRequests(mock).then(validateCallback);
-          // return util.should401(req, errors.CODE_TOKEN_IAT_FUTURE);
         });
         it('accounts for clock skew in issued at check', () => {
           // Set issued at time to 4 minutes from now
