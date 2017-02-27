@@ -11,7 +11,7 @@
  */
 
 /* eslint prefer-template: 0 */
-const config = require('../../../.samples.config.json');
+const config = require('../../../.samples.config.json').oktaSample;
 
 exports.SERVER_PORT = `
       The app server is not running, or it is not running on
