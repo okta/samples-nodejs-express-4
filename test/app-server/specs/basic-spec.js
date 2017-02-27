@@ -13,7 +13,7 @@
 const expect = require('chai').expect;
 const util = require('../lib/util');
 const errors = require('../lib/errors');
-const config = require('../../../.samples.config.json');
+const config = require('../../../.samples.config.json').oktaSample;
 
 describe('The Basics', () => {
   describe('General', () => {

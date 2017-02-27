@@ -14,7 +14,7 @@
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
-const config = require('../../../.samples.config.json');
+const config = require('../../../.samples.config.json').oktaSample;
 const errors = require('./errors');
 
 const expect = chai.expect;
