@@ -1,4 +1,4 @@
-# AngularJS 1.x and express-4 Sample Application
+# Express and Angular 1 Sample
 
 ### Table of Contents
 
@@ -23,7 +23,7 @@
   
 ## Introduction
 
-This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to a NodeJs/express-4 application. 
+This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to an [Express](http://expressjs.com/) app. 
 
 ### 1. Login Redirect
 
@@ -43,7 +43,7 @@ This custom-branded login experience uses the [Okta Sign-In Widget](http://devel
 
 ## Prerequisites
 
-This sample app depends on [Node.js](https://nodejs.org/en/) for frontend dependencies and some build scripts - if you don't have it, install it from [nodejs.org](https://nodejs.org/en/).
+If you don't have [Node.js](https://nodejs.org/en/), install it from [nodejs.org](https://nodejs.org/en/).
 
 ```bash
 # Verify that node is installed
@@ -59,12 +59,9 @@ $ git clone git@github.com:okta/samples-nodejs-express-4.git && cd samples-nodej
 [samples-nodejs-express-4]$ npm install
 ```
 
-{{ SAMPLE-DEVELOPER: ADD EXTRA SETUP HERE }}
-
-
 ## Quick Start
 
-Start the back-end for your sample application with `npm start` or ` {{ SAMPLE-DEVELOPER: ADD START SCRIPT HERE }} `. This will start the app server on [http://localhost:3000](http://localhost:3000).
+Start the back-end for your sample application with `npm start`. This will start the app server on [http://localhost:3000](http://localhost:3000).
 
 By default, this application uses a mock authorization server which responds to API requests like a configured Okta org - it's useful if you haven't yet set up OpenID Connect but would still like to try this sample. 
 
@@ -167,7 +164,7 @@ To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#sec
 ## Back-end
 To complete the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), your back-end server performs the following tasks:
   - Handle the [Authorization Code code exchange](https://tools.ietf.org/html/rfc6749#section-1.3.1) callback
-  - [Validate](http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation) the `idToken`
+  - [Validate](http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation) the `id_token`
   - Set `user` session in the app
   - Log the user out
 
@@ -185,19 +182,53 @@ To render the AngularJS templates, we define the following express-4 routes:
 ### Handle the Redirect
 After successful authentication, an authorization code is returned to the redirectUri:
 ```
-http://127.0.0.1:7777/callback?code={{code}}&state={{state}}
+http://localhost:3000/authorization-code/callback?code={{code}}&state={{state}}
 ```
 
 Two cookies are created after authentication: `okta-oauth-nonce` and `okta-auth-state`. You **must** verify the returned `state` value in the URL matches the `state` value created.
 
 In this sample, we verify the state here:
-
-{{ SAMPLE-DEVELOPER: ADD CHECKING FOR COOKIES HERE }}
+```javascript
+// route-handlers.js
+if (req.cookies['okta-oauth-nonce'] && req.cookies['okta-oauth-state']) {
+  nonce = req.cookies['okta-oauth-nonce'];
+  state = req.cookies['okta-oauth-state'];
+}
+else {
+  res.status(401).send('"state" and "nonce" cookies have not been set before the /callback request');
+  return;
+}
+if (!req.query.state || req.query.state !== state) {
+  res.status(401).send(`Query state "${req.query.state}" does not match cookie state "${state}"`);
+  return;
+}
+```
 
 ### Code Exchange
-Next, we exchange the returned authorization code for an `id_token` and/or `access_token`. You can choose the best [token authentication method](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) for your application. For this sample, we use the default token authentication method `client_secret_basic`:
+Next, we exchange the returned authorization code for an `id_token` and/or `access_token`. You can choose the best [token authentication method](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) for your application. In this sample, we use the default token authentication method `client_secret_basic`:
 
-{{ SAMPLE-DEVELOPER: ADD TOKEN REQUEST CODE HERE }}
+```javascript
+// route-handlers.js
+
+// Base64 encode <client_id>:<client_secret>
+const secret = new Buffer(`${config.oidc.clientId}:${config.oidc.clientSecret}`, 'utf8').toString('base64');
+
+const query = querystring.stringify({
+  grant_type: 'authorization_code',
+  code: req.query.code,
+  redirect_uri: config.oidc.redirectUri,
+});
+
+const options = {
+  url: `${config.oidc.oktaUrl}/oauth2/v1/token?${query}`,
+  method: 'POST',
+  headers: {
+    Authorization: `Basic: ${secret}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+   },
+   json: true,
+};
+```
 
 A successful response returns an `id_token` which looks similar to:
 ```
@@ -217,7 +248,7 @@ ntFBNjluFhNLJIUkEFovEDlfuB4tv_M8BM75celdy3jkpOurg
 ### Validation
 After receiving the `id_token`, we [validate](http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation) the token and its claims to prove its integrity. 
 
-In this sample, we use the {{ SAMPLE-DEVELOPER: ADD TOKEN LIBRARY INFO HERE }} library to decode and validate the token.
+In this sample, we use the [JWS](https://www.npmjs.com/package/jws) library to decode and validate the token.
 
 There are a couple things we need to verify:
 
@@ -235,7 +266,50 @@ For example:
 - If the `kid` has been cached, use it to validate the signature. 
 - If not, make a request to the `jwks_uri`. Cache the new `jwks`, and use the response to validate the signature.
 
-{{ SAMPLE-DEVELOPER: ADD JWKS AND CACHING CODE HERE }}
+```javascript
+// route-handlers.js
+new Promise((resolve, reject) => {
+  // If we've already cached this JWK, return it
+  if (cachedJwks[decoded.header.kid]) {
+    resolve(cachedJwks[decoded.header.kid]);
+    return;
+  }
+
+  // If it's not in the cache, get the latest JWKS from /oauth2/v1/keys
+  const options = {
+    url: `${config.oidc.oktaUrl}/oauth2/v1/keys`,
+    json: true,
+  };
+  request(options, (err, resp, json) => {
+    if (err) {
+      reject(err);
+      return;
+    } else if (json.error) {
+      reject(json);
+      return;
+    }
+
+    json.keys.forEach(key => cachedJwks[key.kid] = key);
+    if (!cachedJwks[decoded.header.kid]) {
+      res.status(401).send('No public key for the returned id_token');
+      return;
+    }
+
+    resolve(cachedJwks[decoded.header.kid]);
+  });
+})
+```
+
+Once we have the public key that matches our `id_token.kid`, we use [pem-jwk](https://www.npmjs.com/package/pem-jwk) to convert it to the PEM encoding, and verify the signature with [jws](https://www.npmjs.com/package/jws):
+
+```javascript
+// route-handlers.js
+const pem = jwk2pem(jwk);
+if (!jws.verify(json.id_token, jwk.alg, pem)) {
+  res.status(401).send('id_token signature is invalid');
+  return;
+}
+```
 
 
 #### Verify fields
@@ -246,36 +320,80 @@ Verify the `id_token` from the [Code Exchange](#code-exchange) contains our expe
   - The `clientId` stored in our configuration matches the `aud` claim
   - If the token expiration time has passed, the token must be revoked
 
-{{ SAMPLE-DEVELOPER: ADD VERIFY FIELDS CODE HERE }}
+```javascript
+// route-handlers.js
+if (config.oidc.oktaUrl !== claims.iss) {
+  res.status(401).send(`id_token issuer ${claims.iss} does not match our issuer ${config.oidc.oktaUrl}`);
+  return;
+}
+if (config.oidc.clientId !== claims.aud) {
+  res.status(401).send(`id_token aud ${claims.aud} does not match our clientId ${config.oidc.clientId}`);
+  return;
+}
 
+const now = Math.floor(new Date().getTime() / 1000);
+const maxClockSkew = 300; // 5 minutes
+if (now - maxClockSkew > claims.exp) {
+  const date = new Date(claims.exp * 1000);
+  res.status(401).send(`The JWT expired and is no longer valid - claims.exp ${claims.exp}, ${date}`);
+  return;
+}
+```
 
 #### Verify issued time
 The `iat` value indicates what time the token was "issued at". We verify that this claim is valid by checking that the token was not issued in the future, with some leeway for clock skew.
 
-{{ SAMPLE-DEVELOPER: ADD VERIFY IAT CODE HERE }}
-
+```javascript
+if (claims.iat > (now + maxClockSkew)) {
+  res.status(401).send(`The JWT was issued in the future - iat ${claims.iat}`);
+  return;
+}
+```
 
 #### Verify nonce
 To mitigate replay attacks, verify that the `nonce` value in the `id_token` matches the `nonce` stored in the cookie `okta-oauth-nonce`.
 
-{{ SAMPLE-DEVELOPER: ADD VERIFY NONCE CODE HERE }}
+```javascript
+// route-handlers.js
+if (nonce !== claims.nonce) {
+  res.status(401).send(`claims.nonce "${claims.nonce}" does not match cookie nonce ${nonce}`);
+  return;
+}
+```
 
 ### Set user session
-If the `idToken` passes validation, we can then set the `user` session in our application. 
+If the `id_token` passes validation, we can then set the `user` session in our application.
 
 In a production app, this code would lookup the `user` from a user store and set the session for that user. However, for simplicity, in this sample we set the session with the claims from the `id_token`.
 
-{{ SAMPLE-DEVELOPER: ADD SETTING USER SESSION CODE HERE }}
+```javascript
+// route-handlers.js
+req.session.user = {
+  email: claims.email,
+  claims,
+};
+```
 
 ### Logout
 In express-4, you can clear the the user session by:
 
-{{ SAMPLE-DEVELOPER: ADD LOGOUT CODE HERE }}
+```javascript
+// route-handlers.js
+handlers.logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      res.status(500).send(err);
+      return;
+    }
+    res.redirect(302, '/');
+  });
+};
+```
 
 The Okta session is terminated in our client-side code.
 
 ## Conclusion
-You have now successfully authenticated with Okta! Now what? With a user's `idToken`, you have basic claims into the user's identity. You can extend the set of claims by modifying the `response_type` and `scopes` to retrieve custom information about the user. This includes `locale`, `address`, `phone_number`, `groups`, and [more](http://developer.okta.com/docs/api/resources/oidc.html#scopes). 
+You have now successfully authenticated with Okta! Now what? With a user's `id_token`, you have basic claims into the user's identity. You can extend the set of claims by modifying the `response_type` and `scopes` to retrieve custom information about the user. This includes `locale`, `address`, `phone_number`, `groups`, and [more](http://developer.okta.com/docs/api/resources/oidc.html#scopes).
 
 ## Support 
 
