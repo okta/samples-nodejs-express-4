@@ -10,6 +10,7 @@
   - [Front End](#front-end)
     - [Login Redirect](#login-redirect)
     - [Custom Login Form](#custom-login-form)
+    - [Using a different front-end](#using-a-different-front-end)
   - [Back End](#back-end)
     - [Routes](#routes)
     - [Handle the Redirect](#handle-the-redirect)
@@ -50,12 +51,12 @@ If you don't have [Node.js](https://nodejs.org/en/), install it from [nodejs.org
 $ node -v
 ```
 
-Then, clone this sample from GitHub and install the frontend dependencies:
+Then, clone this sample from GitHub and install the front-end dependencies:
 ```bash
 # Clone the repo and navigate to the samples-nodejs-express-4 dir
 $ git clone git@github.com:okta/samples-nodejs-express-4.git && cd samples-nodejs-express-4
 
-# Install the frontend dependencies
+# Install the front-end dependencies
 [samples-nodejs-express-4]$ npm install
 ```
 
@@ -160,6 +161,27 @@ class LoginCustomController {
 To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), we set the `responseType` to `code`. This returns an `access_token` and/or `id_token` through the [`/token`](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) OpenID Connect endpoint. 
 
 **Note:** Additional configuration for the `SignIn` object is available at [OpenID Connect, OAuth 2.0, and Social Auth with Okta](https://github.com/okta/okta-signin-widget#configuration).
+
+### Using a different front-end
+
+By default, this end-to-end sample ships with our [Angular 1 front-end sample](https://github.com/okta/samples-js-angular-1). To run this back-end with a different front-end:
+
+1. Choose the front-end
+
+    | Framework | NPM module | Github |
+    |-----------|------------|--------|
+    | Angular 1 | [@okta/samples-js-angular-1](https://www.npmjs.com/package/@okta/samples-js-angular-1) | https://github.com/okta/samples-js-angular-1 |
+    | React | [@okta/samples-js-react](https://www.npmjs.com/package/@okta/samples-js-react) | https://github.com/okta/samples-js-react |
+    | Elm | [@okta/samples-elm](https://www.npmjs.com/package/@okta/samples-elm) | https://github.com/okta/samples-elm |
+
+2. Install the front-end
+
+    ```bash
+    # Use the NPM module for the front-end you want to install. I.e. for React:
+    [samples-nodejs-express-4]$ npm install @okta/samples-js-react
+    ```
+
+3. Restart the server. You should be up and running with the new front-end!
 
 ## Back-end
 To complete the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), your back-end server performs the following tasks:
@@ -314,7 +336,7 @@ if (!jws.verify(json.id_token, jwk.alg, pem)) {
 
 #### Verify fields
 
-Verify the `id_token` from the [Code Exchange](#code-exchange) contains our expected fields: 
+Verify the `id_token` from the [Code Exchange](#code-exchange) contains our expected claims:
 
   - The `issuer` is identical to the host where authorization was performed
   - The `clientId` stored in our configuration matches the `aud` claim
