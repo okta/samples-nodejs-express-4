@@ -12,7 +12,7 @@
 
 /* eslint no-console:0 */
 
-const forever = require('forever-monitor');
+const Monitor = require('forever-monitor').Monitor;
 const waitOn = require('wait-on');
 const chalk = require('chalk');
 const samplesConfig = require('../.samples.config.json').oktaSample;
@@ -20,7 +20,7 @@ const samplesConfig = require('../.samples.config.json').oktaSample;
 const daemonUtil = module.exports;
 
 function startNpmScript(script, color) {
-  var child = new (forever.Monitor)(script, {
+  const child = new Monitor(script, {
     command: 'npm run',
     max: 1,
     silent: true
@@ -71,38 +71,40 @@ function waitOnPromise(opts, context) {
   });
 }
 
+function startAndWait(opts) {
+  return startNpmScript(opts.script, opts.color)
+  .then(child => waitOnPromise({
+    resources: opts.resources
+  }, opts)
+  .then(() => child));
+}
+
 daemonUtil.startAppServer = () => {
-  const script = 'start';
-  const color = 'green';
-  return startNpmScript(script, color)
-    .then(child => waitOnPromise({
-      resources: [
-        `http://localhost:${samplesConfig.server.port}/assets/bundle.js`
-      ]
-    }, { script, color })
-      .then(() => child));
+  return startAndWait({
+    script: 'start',
+    color: 'green',
+    resources: [
+      `http://localhost:${samplesConfig.server.port}/assets/bundle.js`
+    ]
+  });
 };
 
 daemonUtil.startMockOkta = () => {
-  const script = 'mock-okta';
-  const color = 'magenta';
-  return startNpmScript(script, color)
-    .then(child => waitOnPromise({
-      resources: [
-        `tcp:${samplesConfig.mockOkta.port}`
-      ]
-    }, { script, color })
-      .then(() => child));
+  return startAndWait({
+    script: 'mock-okta',
+    color: 'blue',
+    resources: [
+      `tcp:${samplesConfig.mockOkta.port}`
+    ]
+  });
 };
 
 daemonUtil.startTestMockOkta = () => {
-  const script = 'test:mock-okta';
-  const color = 'blue';
-  return startNpmScript(script, color)
-    .then(child => waitOnPromise({
-      resources: [
-        `tcp:${samplesConfig.mockOkta.port}`
-      ]
-    }, { script, color })
-      .then(() => child));
+  return startAndWait({
+    script: 'test:mock-okta',
+    color: 'magenta',
+    resources: [
+      `tcp:${samplesConfig.mockOkta.port}`
+    ]
+  });
 };
