@@ -8,7 +8,6 @@
     },
     "server": {
       "staticDir": "dist",
-      "startSignal": "Express server started",
       "port": 3000,
       "framework": "express-4",
       "environment": "NodeJs"

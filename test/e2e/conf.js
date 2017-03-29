@@ -13,12 +13,12 @@
 /* eslint import/no-unresolved:0, import/no-extraneous-dependencies:0, no-console:0 */
 /* global jasmine */
 const jasmineReporters = require('jasmine-reporters');
-const startAndWaitFor = require('../../tools/start-and-wait-for');
+const daemonUtil = require('../../tools/daemonUtil');
 const samplesConfig = require('../../.samples.config.json').oktaSample;
 
 const promises = Promise.all([
-  startAndWaitFor('npm', ['start'], samplesConfig.server.startSignal, 'green'),
-  startAndWaitFor('npm', ['run', 'mock-okta'], 'Proxying:', 'magenta'),
+  daemonUtil.startAppServer(),
+  daemonUtil.startMockOkta()
 ]);
 
 const config = {
@@ -34,7 +34,7 @@ const config = {
   },
   afterLaunch() {
     promises.then((childProcesses) => {
-      childProcesses.forEach(child => process.kill(-child.pid));
+      childProcesses.forEach(child => child.stop());
     });
     return new Promise(resolve => setTimeout(() => resolve(), 1000));
   },
