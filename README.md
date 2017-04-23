@@ -1,4 +1,4 @@
-# Express and Angular 1 Sample
+# Express and Angular 1 Samples
 
 ### Table of Contents
 
