@@ -12,12 +12,11 @@
 
 require('./spec-list');
 
-const daemonUtil = require('../../tools/daemonUtil');
-const samplesConfig = require('../../.samples.config.json').oktaSample;
+const daemonUtil = require('../../tools/daemon-util');
 
 const promises = Promise.all([
   daemonUtil.startAppServer(),
-  daemonUtil.startTestMockOkta()
+  daemonUtil.startTestMockOkta(),
 ]);
 
 before(() => promises);
