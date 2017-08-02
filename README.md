@@ -1,4 +1,4 @@
-# Express and Angular 1 Sample
+# AngularJS 1.x and express-4 Sample Application
 
 ### Table of Contents
 
@@ -24,7 +24,7 @@
   
 ## Introduction
 
-This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to an [Express](http://expressjs.com/) app. 
+This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to a NodeJs/express-4 application.
 
 ### 1. Login Redirect
 
@@ -44,7 +44,7 @@ This custom-branded login experience uses the [Okta Sign-In Widget](http://devel
 
 ## Prerequisites
 
-If you don't have [Node.js](https://nodejs.org/en/), install it from [nodejs.org](https://nodejs.org/en/).
+This sample app depends on [Node.js](https://nodejs.org/en/) for front-end dependencies and some build scripts - if you don't have it, install it from [nodejs.org](https://nodejs.org/en/).
 
 ```bash
 # Verify that node is installed
@@ -77,7 +77,7 @@ If you'd like to test this sample against your own Okta org, follow [these steps
 // .samples.config.json
 {
   "oidc": {
-    "oktaUrl": "https://{{yourOktaOrg}}.oktapreview.com",
+    "oktaUrl": "https://{{yourOktaDomain}}.com",
     "clientId": "{{yourClientId}}",
     "clientSecret": "{{yourClientSecret}}",
     "redirectUri": "http://localhost:3000/authorization-code/callback"
@@ -158,7 +158,7 @@ class LoginCustomController {
   }
 }
 ```
-To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), we set the `responseType` to `code`. This returns an `access_token` and/or `id_token` through the [`/token`](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) OpenID Connect endpoint. 
+To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), we set the `responseType` to `code`. This returns an `access_token` and/or `id_token` through the [`/token`](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) OpenID Connect endpoint.
 
 **Note:** Additional configuration for the `SignIn` object is available at [OpenID Connect, OAuth 2.0, and Social Auth with Okta](https://github.com/okta/okta-signin-widget#configuration).
 
@@ -173,6 +173,7 @@ By default, this end-to-end sample ships with our [Angular 1 front-end sample](h
     | Angular 1 | [@okta/samples-js-angular-1](https://www.npmjs.com/package/@okta/samples-js-angular-1) | https://github.com/okta/samples-js-angular-1 |
     | React | [@okta/samples-js-react](https://www.npmjs.com/package/@okta/samples-js-react) | https://github.com/okta/samples-js-react |
     | Elm | [@okta/samples-elm](https://www.npmjs.com/package/@okta/samples-elm) | https://github.com/okta/samples-elm |
+
 
 2. Install the front-end
 
@@ -210,6 +211,7 @@ http://localhost:3000/authorization-code/callback?code={{code}}&state={{state}}
 Two cookies are created after authentication: `okta-oauth-nonce` and `okta-auth-state`. You **must** verify the returned `state` value in the URL matches the `state` value created.
 
 In this sample, we verify the state here:
+
 ```javascript
 // route-handlers.js
 if (req.cookies['okta-oauth-nonce'] && req.cookies['okta-oauth-state']) {
@@ -231,16 +233,13 @@ Next, we exchange the returned authorization code for an `id_token` and/or `acce
 
 ```javascript
 // route-handlers.js
-
 // Base64 encode <client_id>:<client_secret>
 const secret = new Buffer(`${config.oidc.clientId}:${config.oidc.clientSecret}`, 'utf8').toString('base64');
-
 const query = querystring.stringify({
   grant_type: 'authorization_code',
   code: req.query.code,
   redirect_uri: config.oidc.redirectUri,
 });
-
 const options = {
   url: `${config.oidc.oktaUrl}/oauth2/v1/token?${query}`,
   method: 'POST',
@@ -282,10 +281,10 @@ There are a couple things we need to verify:
 You can learn more about validating tokens in [OpenID Connect Resources](http://developer.okta.com/docs/api/resources/oidc.html#validating-id-tokens).
 
 #### Verify signature
-An `id_token` contains a [public key id](https://tools.ietf.org/html/rfc7517#section-4.5) (`kid`). To verify the signature, we use the [Discovery Document](http://developer.okta.com/docs/api/resources/oidc.html#openid-connect-discovery-document) to find the `jwks_uri`, which will return a list of public keys. It is safe to cache or persist these keys for performance, but Okta rotates them periodically. We strongly recommend dynamically retrieving these keys. 
+An `id_token` contains a [public key id](https://tools.ietf.org/html/rfc7517#section-4.5) (`kid`). To verify the signature, we use the [Discovery Document](http://developer.okta.com/docs/api/resources/oidc.html#openid-connect-discovery-document) to find the `jwks_uri`, which will return a list of public keys. It is safe to cache or persist these keys for performance, but Okta rotates them periodically. We strongly recommend dynamically retrieving these keys.
 
-For example: 
-- If the `kid` has been cached, use it to validate the signature. 
+For example:
+- If the `kid` has been cached, use it to validate the signature.
 - If not, make a request to the `jwks_uri`. Cache the new `jwks`, and use the response to validate the signature.
 
 ```javascript
@@ -296,7 +295,6 @@ new Promise((resolve, reject) => {
     resolve(cachedJwks[decoded.header.kid]);
     return;
   }
-
   // If it's not in the cache, get the latest JWKS from /oauth2/v1/keys
   const options = {
     url: `${config.oidc.oktaUrl}/oauth2/v1/keys`,
@@ -310,20 +308,17 @@ new Promise((resolve, reject) => {
       reject(json);
       return;
     }
-
     json.keys.forEach(key => cachedJwks[key.kid] = key);
     if (!cachedJwks[decoded.header.kid]) {
       res.status(401).send('No public key for the returned id_token');
       return;
     }
-
     resolve(cachedJwks[decoded.header.kid]);
   });
 })
 ```
 
 Once we have the public key that matches our `id_token.kid`, we use [pem-jwk](https://www.npmjs.com/package/pem-jwk) to convert it to the PEM encoding, and verify the signature with [jws](https://www.npmjs.com/package/jws):
-
 ```javascript
 // route-handlers.js
 const pem = jwk2pem(jwk);
@@ -332,7 +327,6 @@ if (!jws.verify(json.id_token, jwk.alg, pem)) {
   return;
 }
 ```
-
 
 #### Verify fields
 
@@ -352,7 +346,6 @@ if (config.oidc.clientId !== claims.aud) {
   res.status(401).send(`id_token aud ${claims.aud} does not match our clientId ${config.oidc.clientId}`);
   return;
 }
-
 const now = Math.floor(new Date().getTime() / 1000);
 const maxClockSkew = 300; // 5 minutes
 if (now - maxClockSkew > claims.exp) {
