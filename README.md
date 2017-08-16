@@ -1,4 +1,4 @@
-# Express and Angular 1 Sample
+# AngularJS 1.x and express-4 Sample Application
 
 ### Table of Contents
 
@@ -24,7 +24,7 @@
   
 ## Introduction
 
-This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to an [Express](http://expressjs.com/) app. 
+This tutorial will demonstrate how to use OAuth 2.0 and OpenID Connect to add authentication to a NodeJs/express-4 application.
 
 ### 1. Login Redirect
 
@@ -44,7 +44,7 @@ This custom-branded login experience uses the [Okta Sign-In Widget](http://devel
 
 ## Prerequisites
 
-If you don't have [Node.js](https://nodejs.org/en/), install it from [nodejs.org](https://nodejs.org/en/).
+This sample app depends on [Node.js](https://nodejs.org/en/) for front-end dependencies and some build scripts - if you don't have it, install it from [nodejs.org](https://nodejs.org/en/).
 
 ```bash
 # Verify that node is installed
@@ -68,16 +68,24 @@ By default, this application uses a mock authorization server which responds to 
 
 To start the mock server, run the following in a second terminal window:
 ```bash
-# Starts the mock Okta server at http://127.0.0.01:7777
+# Starts the mock Okta server at http://127.0.0.1:7777
 [samples-nodejs-express-4]$ npm run mock-okta
 ```
 
-If you'd like to test this sample against your own Okta org, follow [these steps to setup an OpenID Connect app](docs/assets/oidc-app-setup.md). Then, replace the *oidc* settings in `samples.config.json` to point to your new app:
+If you'd like to test this sample against your own Okta org, navigate to the Okta Developer Dashboard and follow these steps:
+
+1. Create a new **Web** application by selecting **Create New Application** from the *Applications* page.		
+2. After accepting the default configuration, select **Create Application** to redirect back to the *General Settings* of your application.		
+3. Copy the **Client ID** and **Client Secret**, as it will be needed for the client configuration.
+4. Finally, navigate to `https://{yourOktaDomain}.com/oauth2/default` to see if the [Default Authorization Server](https://developer.okta.com/docs/api/resources/oauth2.html#using-the-default-authorization-server) is setup. If not, [let us know](mailto:developers@okta.com).
+
+Then, replace the *oidc* settings in `.samples.config.json` to point to your new app:
 ```javascript
 // .samples.config.json
 {
   "oidc": {
-    "oktaUrl": "https://{{yourOktaOrg}}.oktapreview.com",
+    "oktaUrl": "https://{{yourOktaDomain}}.com",
+    "issuer": "https://{{yourOktaDomain}}.com/oauth2/default",
     "clientId": "{{yourClientId}}",
     "clientSecret": "{{yourClientSecret}}",
     "redirectUri": "http://localhost:3000/authorization-code/callback"
@@ -103,6 +111,7 @@ class LoginRedirectController {
    $onInit() {
     this.authClient = new OktaAuth({
       url: this.config.oktaUrl,
+      issuer: this.config.issuer,
       clientId: this.config.clientId,
       redirectUri: this.config.redirectUri,
       scopes: ['openid', 'email', 'profile'],
@@ -122,7 +131,6 @@ There are a number of different ways to construct the login redirect URL.
 3. Use [AuthJS](http://developer.okta.com/code/javascript/okta_auth_sdk)
 
 In this sample, we use AuthJS to create the URL and perform the redirect. An `OktaAuth` object is instantiated with the configuration in `.samples.config.json`. When the `login()` function is called from the view, it calls the [`/authorize`](http://developer.okta.com/docs/api/resources/oauth2.html#authentication-request) endpoint to start the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1).
- 
 
 You can read more about the `OktaAuth` configuration options here: [OpenID Connect with Okta AuthJS SDK](http://developer.okta.com/code/javascript/okta_auth_sdk#social-authentication-and-openid-connect).
 
@@ -150,6 +158,7 @@ class LoginCustomController {
       clientId: this.config.clientId,
       redirectUri: this.config.redirectUri,
       authParams: {
+        issuer: this.config.issuer,
         responseType: 'code',
         scopes: ['openid', 'email', 'profile'],
       },
@@ -158,7 +167,7 @@ class LoginCustomController {
   }
 }
 ```
-To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), we set the `responseType` to `code`. This returns an `access_token` and/or `id_token` through the [`/token`](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) OpenID Connect endpoint. 
+To perform the [Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-1.3.1), we set the `responseType` to `code`. This returns an `access_token` and/or `id_token` through the [`/token`](http://developer.okta.com/docs/api/resources/oauth2.html#token-request) OpenID Connect endpoint.
 
 **Note:** Additional configuration for the `SignIn` object is available at [OpenID Connect, OAuth 2.0, and Social Auth with Okta](https://github.com/okta/okta-signin-widget#configuration).
 
@@ -210,6 +219,7 @@ http://localhost:3000/authorization-code/callback?code={{code}}&state={{state}}
 Two cookies are created after authentication: `okta-oauth-nonce` and `okta-auth-state`. You **must** verify the returned `state` value in the URL matches the `state` value created.
 
 In this sample, we verify the state here:
+
 ```javascript
 // route-handlers.js
 if (req.cookies['okta-oauth-nonce'] && req.cookies['okta-oauth-state']) {
@@ -231,18 +241,15 @@ Next, we exchange the returned authorization code for an `id_token` and/or `acce
 
 ```javascript
 // route-handlers.js
-
 // Base64 encode <client_id>:<client_secret>
 const secret = new Buffer(`${config.oidc.clientId}:${config.oidc.clientSecret}`, 'utf8').toString('base64');
-
 const query = querystring.stringify({
   grant_type: 'authorization_code',
   code: req.query.code,
   redirect_uri: config.oidc.redirectUri,
 });
-
 const options = {
-  url: `${config.oidc.oktaUrl}/oauth2/v1/token?${query}`,
+  url: `${config.oidc.issuer}/v1/token?${query}`,
   method: 'POST',
   headers: {
     Authorization: `Basic: ${secret}`,
@@ -282,10 +289,10 @@ There are a couple things we need to verify:
 You can learn more about validating tokens in [OpenID Connect Resources](http://developer.okta.com/docs/api/resources/oidc.html#validating-id-tokens).
 
 #### Verify signature
-An `id_token` contains a [public key id](https://tools.ietf.org/html/rfc7517#section-4.5) (`kid`). To verify the signature, we use the [Discovery Document](http://developer.okta.com/docs/api/resources/oidc.html#openid-connect-discovery-document) to find the `jwks_uri`, which will return a list of public keys. It is safe to cache or persist these keys for performance, but Okta rotates them periodically. We strongly recommend dynamically retrieving these keys. 
+An `id_token` contains a [public key id](https://tools.ietf.org/html/rfc7517#section-4.5) (`kid`). To verify the signature, we use the [Discovery Document](http://developer.okta.com/docs/api/resources/oidc.html#openid-connect-discovery-document) to find the `jwks_uri`, which will return a list of public keys. It is safe to cache or persist these keys for performance, but Okta rotates them periodically. We strongly recommend dynamically retrieving these keys.
 
-For example: 
-- If the `kid` has been cached, use it to validate the signature. 
+For example:
+- If the `kid` has been cached, use it to validate the signature.
 - If not, make a request to the `jwks_uri`. Cache the new `jwks`, and use the response to validate the signature.
 
 ```javascript
@@ -296,10 +303,9 @@ new Promise((resolve, reject) => {
     resolve(cachedJwks[decoded.header.kid]);
     return;
   }
-
-  // If it's not in the cache, get the latest JWKS from /oauth2/v1/keys
+  // If it's not in the cache, get the latest JWKS from /oauth2/default/v1/keys
   const options = {
-    url: `${config.oidc.oktaUrl}/oauth2/v1/keys`,
+    url: `${config.oidc.issuer}/v1/keys`,
     json: true,
   };
   request(options, (err, resp, json) => {
@@ -310,20 +316,17 @@ new Promise((resolve, reject) => {
       reject(json);
       return;
     }
-
     json.keys.forEach(key => cachedJwks[key.kid] = key);
     if (!cachedJwks[decoded.header.kid]) {
       res.status(401).send('No public key for the returned id_token');
       return;
     }
-
     resolve(cachedJwks[decoded.header.kid]);
   });
 })
 ```
 
 Once we have the public key that matches our `id_token.kid`, we use [pem-jwk](https://www.npmjs.com/package/pem-jwk) to convert it to the PEM encoding, and verify the signature with [jws](https://www.npmjs.com/package/jws):
-
 ```javascript
 // route-handlers.js
 const pem = jwk2pem(jwk);
@@ -332,7 +335,6 @@ if (!jws.verify(json.id_token, jwk.alg, pem)) {
   return;
 }
 ```
-
 
 #### Verify fields
 
@@ -344,15 +346,14 @@ Verify the `id_token` from the [Code Exchange](#code-exchange) contains our expe
 
 ```javascript
 // route-handlers.js
-if (config.oidc.oktaUrl !== claims.iss) {
-  res.status(401).send(`id_token issuer ${claims.iss} does not match our issuer ${config.oidc.oktaUrl}`);
+if (config.oidc.issuer !== claims.iss) {
+  res.status(401).send(`id_token issuer ${claims.iss} does not match our issuer ${config.oidc.issuer}`);
   return;
 }
 if (config.oidc.clientId !== claims.aud) {
   res.status(401).send(`id_token aud ${claims.aud} does not match our clientId ${config.oidc.clientId}`);
   return;
 }
-
 const now = Math.floor(new Date().getTime() / 1000);
 const maxClockSkew = 300; // 5 minutes
 if (now - maxClockSkew > claims.exp) {
@@ -417,7 +418,7 @@ The Okta session is terminated in our client-side code.
 ## Conclusion
 You have now successfully authenticated with Okta! Now what? With a user's `id_token`, you have basic claims into the user's identity. You can extend the set of claims by modifying the `response_type` and `scopes` to retrieve custom information about the user. This includes `locale`, `address`, `phone_number`, `groups`, and [more](http://developer.okta.com/docs/api/resources/oidc.html#scopes).
 
-## Support 
+## Support
 
 Have a question or see a bug? Email developers@okta.com. For feature requests, feel free to open an issue on this repo. If you find a security vulnerability, please follow our [Vulnerability Reporting Process](https://www.okta.com/vulnerability-reporting-policy/).
 
@@ -428,4 +429,3 @@ Copyright 2017 Okta, Inc. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-

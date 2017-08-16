@@ -1,6 +1,6 @@
 {
   "name": "@okta/samples-nodejs-express-4",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "publishConfig": {
     "registry": "https://artifacts.aue1d.saasure.com/artifactory/api/npm/npm-okta"
   },
@@ -38,7 +38,7 @@
     "yakbak": "2.5.0"
   },
   "dependencies": {
-    "@okta/samples-js-angular-1": "1.9.0",
+    "@okta/samples-js-angular-1": "1.10.0",
     "chai": "3.5.0",
     "chai-files": "1.4.0",
     "chai-http": "3.0.0",
