@@ -13,12 +13,11 @@
 /* eslint import/no-unresolved:0, import/no-extraneous-dependencies:0, no-console:0 */
 /* global jasmine */
 const jasmineReporters = require('jasmine-reporters');
-const daemonUtil = require('../../tools/daemonUtil');
-const samplesConfig = require('../../.samples.config.json').oktaSample;
+const daemonUtil = require('../../tools/daemon-util');
 
 const promises = Promise.all([
   daemonUtil.startAppServer(),
-  daemonUtil.startMockOkta()
+  daemonUtil.startMockOkta(),
 ]);
 
 const config = {

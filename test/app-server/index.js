@@ -12,7 +12,7 @@
 
 require('./spec-list');
 
-const daemonUtil = require('../../tools/daemonUtil');
+const daemonUtil = require('../../tools/daemon-util');
 
 const promise = daemonUtil.startTestMockOkta();
 
