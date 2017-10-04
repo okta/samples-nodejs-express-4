@@ -128,9 +128,11 @@
      {{#user}}
      options.user = {
        email: '{{user.email}}',
-       iss: '{{user.claims.iss}}',
-       iat: {{user.claims.iat}},
-       exp: {{user.claims.exp}}
+       givenName: '{{user.given_name}}',
+       familyName: '{{user.family_name}}',
+       subject: '{{user.sub}}',
+       zoneInfo: '{{user.zoneinfo}}',
+       locale: '{{user.locale}}'
      };
      {{/user}}
 

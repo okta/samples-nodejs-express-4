@@ -38,6 +38,7 @@
     "yakbak": "2.5.0"
   },
   "dependencies": {
+    "@okta/oidc-middleware": "0.0.2",
     "@okta/samples-js-angular-1": "1.10.0",
     "chai": "3.5.0",
     "chai-files": "1.4.0",
@@ -45,11 +46,12 @@
     "consolidate": "0.14.1",
     "cookie-parser": "1.4.3",
     "express": "4.14.0",
-    "express-session": "1.14.2",
+    "express-session": "^1.15.5",
     "lodash.merge": "4.6.0",
     "mocha": "3.1.2",
     "mustache": "2.2.1",
     "pem-jwk": "1.5.1",
-    "request": "2.78.0"
+    "request": "2.78.0",
+    "uuid": "^3.1.0"
   }
 }
