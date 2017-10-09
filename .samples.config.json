@@ -3,8 +3,8 @@
     "oidc": {
       "oktaUrl": "http://127.0.0.1:7777",
       "issuer": "http://127.0.0.1:7777/oauth2/default",
-      "clientId": "0oaom8GeLzZeX7oYZ0g3",
-      "clientSecret": "XIZPoGtuyhu0V8MsQzGOsOSn6oSff3vO8Vp2nmLY",
+      "clientId": "0oaouvtY01adO96Z00g3",
+      "clientSecret": "O9600awp6YD_lSjF03Vzuma-Y2_uJ50zrZsfI7K_",
       "redirectUri": "http://localhost:3000/authorization-code/callback"
     },
     "server": {
@@ -17,7 +17,8 @@
       "port": 7777,
       "proxy": "http://127.0.0.1",
       "proxied": "http://rain.okta1.com:1802",
-      "cdn": "http://cdn.okta1.com"
+      "cdn": "http://cdn.okta1.com",
+      "state": "f29aee5e-38ac-40ae-b194-398cc86ab4a9"
     }
   }
 }

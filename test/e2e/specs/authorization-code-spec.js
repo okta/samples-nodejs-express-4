@@ -41,7 +41,8 @@ describe('Authorization Code Flows', () => {
     expect(app.getEmail()).toBe('george@acme.com');
   });
 
-  it('can login with a custom login form', () => {
+  // TODO - Enable after hosted login-page flow is integrated 
+  xit('can login with a custom login form', () => {
     overview.chooseAuthCodeLoginCustom();
     loginCustom.login('john', 'Asdf1234');
     app.waitForPageLoad();
