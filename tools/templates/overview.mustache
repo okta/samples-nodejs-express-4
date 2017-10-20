@@ -19,9 +19,6 @@
           <a id="item-login-redirect" data-se="auth-code-login-redirect" class="item" href="/authorization-code/login-redirect">
             Login by redirecting to Okta
           </a>
-          <a id="item-login-custom" data-se="auth-code-login-custom" class="item" href="/authorization-code/login-custom">
-            Create a custom login page
-          </a>
         </div>
       </div>
     </div>
@@ -203,16 +200,7 @@
        clientId: '{{config.oidc.clientId}}',
        redirectUri: '{{{config.oidc.redirectUri}}}'
      };
-
-     {{#user}}
-     options.user = {
-       email: '{{user.email}}',
-       iss: '{{user.claims.iss}}',
-       iat: {{user.claims.iat}},
-       exp: {{user.claims.exp}}
-     };
-     {{/user}}
-
+     
      doc.initDoc();
      bundle.bootstrap(options);
     </script>
