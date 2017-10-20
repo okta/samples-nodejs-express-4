@@ -1,6 +1,6 @@
 {
   "name": "@okta/samples-nodejs-express-4",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "publishConfig": {
     "registry": "https://artifacts.aue1d.saasure.com/artifactory/api/npm/npm-okta"
   },
@@ -13,7 +13,7 @@
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
     "start": "node lib/index.js",
-    "test": "npm run test:app-server-all && npm run test:docs && npm run test:e2e",
+    "test": "npm run test:docs && npm run test:e2e",
     "mock-okta": "node tools/mock-okta",
     "mock-okta:debug": "DEBUG=mock-okta npm run mock-okta",
     "wrap": "node tools/wrap-dependencies",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@okta/oidc-middleware": "0.0.2",
-    "@okta/samples-js-angular-1": "1.10.0",
+    "@okta/samples-js-angular-1": "git+https://github.com/okta/samples-js-angular-1.git",
     "body-parser": "^1.18.2",
     "chai": "3.5.0",
     "chai-files": "1.4.0",

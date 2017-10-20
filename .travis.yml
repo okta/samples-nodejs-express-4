@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-- '5.8'
+- '8.4.0'
 install:
 - npm install
 script:
@@ -12,7 +12,7 @@ cache:
   directories:
     - travis_phantomjs
 before_install:
-  - "npm install -g npm@4.1.2"
+  - "npm install -g npm@5.3.0"
   - "export PHANTOMJS_VERSION=2.1.1"
   - "export PATH=$PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64/bin:$PATH"
   - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then rm -rf $PWD/travis_phantomjs; mkdir -p $PWD/travis_phantomjs; fi"

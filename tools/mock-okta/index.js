@@ -26,7 +26,7 @@ const debug = require('debug')('mock-okta');
 const util = require('./util');
 const keys = require('./keys-test');
 const config = require('../../.samples.config.json').oktaSample.mockOkta;
-const textParser = require('body-parser').text({type: '*/*'});
+const textParser = require('body-parser').text({ type: '*/*' });
 const Readable = require('stream').Readable;
 
 // ----------------------------------------------------------------------------
@@ -151,18 +151,18 @@ function handleKeys(req, res) {
 }
 
 /**
- * For the /oauth2/default/v1/token request, we need to replace the dynamic state 
+ * For the /oauth2/default/v1/token request, we need to replace the dynamic state
  * in the request form-body with a known state
- * This is to ensure that the right tape is requested in yakbak, 
+ * This is to ensure that the right tape is requested in yakbak,
  * which uses body to hash-request the tape
- * 
+ *
  * In this case, a known state is the state that was generated while recording
  */
 function handleToken(req, res, next) {
   textParser(req, res, () => {
     // We need to replace the body with a known state only while playing back the tapes
     if (!req.body || record) return;
-    req.body = req.body.replace(`state=${store['state'].state}`, `state=${config.state}`);
+    req.body = req.body.replace(`state=${store.data.state}`, `state=${config.state}`);
 
     const stream = new Readable();
     stream._read = () => {};
@@ -210,15 +210,15 @@ function transform(req, res, next) {
   if (data.isAuthorizeReq) {
     debug('/authorize request, storing data');
     debug(data);
-    store['state'] = { state: data.state, nonce: data.nonce };
+    store.data = { state: data.state, nonce: data.nonce };
   }
 
-  // When we are redirecting back to the client, 
+  // When we are redirecting back to the client,
   // we need to restore the state to what was originally set
   if (data.isRedirectCallback) {
     debug('Need to restore the state');
     debug(store);
-    data.state = store['state'].state;
+    data.state = store.data.state;
   }
 
   // Retrieve stored data when okta_key is present - this is needed in the
