@@ -54,7 +54,7 @@ $ git clone git@github.com:okta/samples-nodejs-express-4.git && cd samples-nodej
 
 ## Quick Start
 
-Start the back-end for your sample application with `npm start`. This will start the app server on [http://localhost:3000](http://localhost:3000).
+Start the back-end for your sample application with `npm start`. This will start the app server on [http://localhost:8080](http://localhost:8080).
 
 By default, this application uses a mock authorization server which responds to API requests like a configured Okta org - it's useful if you haven't yet set up OpenID Connect but would still like to try this sample. 
 
@@ -81,7 +81,7 @@ Then, replace the *oidc* settings in `.samples.config.json` to point to your new
     "issuer": "https://{{yourOktaDomain}}.com/oauth2/default",
     "clientId": "{{yourClientId}}",
     "clientSecret": "{{yourClientSecret}}",
-    "redirectUri": "http://localhost:3000/authorization-code/callback"
+    "redirectUri": "http://localhost:8080/authorization-code/callback"
   }
 }
 ```

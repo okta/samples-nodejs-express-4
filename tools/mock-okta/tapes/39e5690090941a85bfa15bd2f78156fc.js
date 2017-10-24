@@ -7,7 +7,7 @@ var path = require("path");
  * accept-encoding: gzip
  * accept: application/json
  * host: rain.okta1.com:1802
- * connection: close
+ * connection: keep-alive
  * accept-language: en-US
  * cookie: 
  * cache-control: no-cache, no-store
@@ -18,19 +18,18 @@ module.exports = function (req, res) {
   res.statusCode = 200;
 
   res.setHeader("server", "Apache-Coyote/1.1");
-  res.setHeader("x-okta-request-id", "reqLb7TDquHQFWJm-1lP6-FnA");
+  res.setHeader("x-okta-request-id", "reqTQbH1J9gR1yMQlETFLCxIg");
   res.setHeader("p3p", "CP=\"HONK\"");
-  res.setHeader("set-cookie", ["sid=\"\"; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/","JSESSIONID=F494B238B19C47DF6C43D0C4B2269896; Path=/"]);
+  res.setHeader("set-cookie", ["sid=\"\"; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/","JSESSIONID=B99B0A3D52119E304E18E852DDEC0B28; Path=/"]);
   res.setHeader("x-rate-limit-limit", "10000");
   res.setHeader("x-rate-limit-remaining", "9999");
-  res.setHeader("x-rate-limit-reset", "1507320552");
+  res.setHeader("x-rate-limit-reset", "1508785218");
   res.setHeader("cache-control", "no-cache, no-store");
   res.setHeader("pragma", "no-cache");
   res.setHeader("expires", "0");
   res.setHeader("content-type", "application/json;charset=UTF-8");
   res.setHeader("transfer-encoding", "chunked");
-  res.setHeader("date", "Fri, 06 Oct 2017 20:08:12 GMT");
-  res.setHeader("connection", "close");
+  res.setHeader("date", "Mon, 23 Oct 2017 18:59:18 GMT");
 
   res.setHeader("x-yakbak-tape", path.basename(__filename, ".js"));
 

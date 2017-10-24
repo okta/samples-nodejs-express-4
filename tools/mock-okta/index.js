@@ -26,6 +26,7 @@ const debug = require('debug')('mock-okta');
 const util = require('./util');
 const keys = require('./keys-test');
 const config = require('../../.samples.config.json').oktaSample.mockOkta;
+const clientConfig = require('../../.samples.config.json').oktaSample.oidc;
 const textParser = require('body-parser').text({ type: '*/*' });
 const Readable = require('stream').Readable;
 
@@ -129,7 +130,7 @@ function getResponseBody(headers, chunks, data) {
     if (gzipped) {
       resBody = zlib.gunzipSync(resBody);
     }
-    const str = util.mapCachedBodyToResponse(resBody.toString('utf8'), data);
+    const str = util.mapCachedBodyToResponse(resBody.toString('utf8'), data, record);
     resBody = new Buffer(str, 'utf8');
     if (gzipped) {
       resBody = zlib.gzipSync(resBody);
@@ -160,9 +161,24 @@ function handleKeys(req, res) {
  */
 function handleToken(req, res, next) {
   textParser(req, res, () => {
-    // We need to replace the body with a known state only while playing back the tapes
-    if (!req.body || record) return;
-    req.body = req.body.replace(`state=${store.data.state}`, `state=${config.state}`);
+    if (!req.body) return;
+    // Express openid-client sends the dynamic state parameter to token request
+    // We need to replace it with a "known" state, so that we hit the right tape each time
+    req.body = req.body.replace(`state=${store['state']}`, 'state=STATE');
+
+    // Spring back-end sends the client-id and client-secret in the token request.
+    // We use express back-end to record tapes, which sends the state value in token request
+    // During playback, we replace the spring back-end's token request body with state, so that we hit the right tape
+    req.body = req.body.replace(`client_id=${clientConfig.clientId}&client_secret=${clientConfig.clientSecret}`, 
+                                'state=STATE');
+
+    // Massaging the request headers to match the change in body length
+    req.headers['content-length'] = `${req.body.length}`;
+
+    // Spring back-end doesn't use Basic Auth for token requests whereas express back-end does
+    // By now, you should have figured out that we modify spring back-end requests to match the express back-end
+    const value = new Buffer(`${clientConfig.clientId}:${clientConfig.clientSecret}`).toString('base64');
+    req.headers['authorization'] = `Basic ${value}`
 
     const stream = new Readable();
     stream._read = () => {};
@@ -210,7 +226,8 @@ function transform(req, res, next) {
   if (data.isAuthorizeReq) {
     debug('/authorize request, storing data');
     debug(data);
-    store.data = { state: data.state, nonce: data.nonce };
+    store[data.state] = { state: data.state, nonce: data.nonce };
+    store['state'] = data.state;
   }
 
   // When we are redirecting back to the client,
@@ -218,7 +235,7 @@ function transform(req, res, next) {
   if (data.isRedirectCallback) {
     debug('Need to restore the state');
     debug(store);
-    data.state = store.data.state;
+    data.state = store['state'];
   }
 
   // Retrieve stored data when okta_key is present - this is needed in the
