@@ -3,13 +3,13 @@
     "oidc": {
       "oktaUrl": "http://127.0.0.1:7777",
       "issuer": "http://127.0.0.1:7777/oauth2/default",
-      "clientId": "0oaom8GeLzZeX7oYZ0g3",
-      "clientSecret": "XIZPoGtuyhu0V8MsQzGOsOSn6oSff3vO8Vp2nmLY",
-      "redirectUri": "http://localhost:3000/authorization-code/callback"
+      "clientId": "0oap44gsvXUitBZSv0g3",
+      "clientSecret": "yW0hyQh2ZNLcryr5n1BiBCcSAFjFDSWw_XYNUgB0",
+      "redirectUri": "http://localhost:8080/authorization-code/callback"
     },
     "server": {
       "staticDir": "dist",
-      "port": 3000,
+      "port": 8080, 
       "framework": "express-4",
       "environment": "NodeJs"
     },

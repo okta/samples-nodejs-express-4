@@ -26,6 +26,9 @@ const debug = require('debug')('mock-okta');
 const util = require('./util');
 const keys = require('./keys-test');
 const config = require('../../.samples.config.json').oktaSample.mockOkta;
+const clientConfig = require('../../.samples.config.json').oktaSample.oidc;
+const textParser = require('body-parser').text({ type: '*/*' });
+const Readable = require('stream').Readable;
 
 // ----------------------------------------------------------------------------
 // Command line arguments
@@ -104,7 +107,7 @@ function sendHeaders(res, headers, data, setHeader) {
   }
 
   // Transform and send the headers
-  const mapped = util.mapCachedHeadersToResponse(headers, data);
+  const mapped = util.mapCachedHeadersToResponse(headers, data, record);
   Object.keys(mapped).forEach((key) => {
     setHeader.call(res, key, mapped[key]);
   });
@@ -127,7 +130,7 @@ function getResponseBody(headers, chunks, data) {
     if (gzipped) {
       resBody = zlib.gunzipSync(resBody);
     }
-    const str = util.mapCachedBodyToResponse(resBody.toString('utf8'), data);
+    const str = util.mapCachedBodyToResponse(resBody.toString('utf8'), data, record);
     resBody = new Buffer(str, 'utf8');
     if (gzipped) {
       resBody = zlib.gzipSync(resBody);
@@ -149,6 +152,45 @@ function handleKeys(req, res) {
 }
 
 /**
+ * For the /oauth2/default/v1/token request, we need to replace the dynamic state
+ * in the request form-body with a known state
+ * This is to ensure that the right tape is requested in yakbak,
+ * which uses body to hash-request the tape
+ *
+ * In this case, a known state is the state that was generated while recording
+ */
+function handleToken(req, res, next) {
+  textParser(req, res, () => {
+    if (!req.body) return;
+    // Express openid-client sends the dynamic state parameter to token request
+    // We need to replace it with a "known" state, so that we hit the right tape each time
+    req.body = req.body.replace(`state=${store['state']}`, 'state=STATE');
+
+    // Spring back-end sends the client-id and client-secret in the token request.
+    // We use express back-end to record tapes, which sends the state value in token request
+    // During playback, we replace the spring back-end's token request body with state, so that we hit the right tape
+    req.body = req.body.replace(`client_id=${clientConfig.clientId}&client_secret=${clientConfig.clientSecret}`, 
+                                'state=STATE');
+
+    // Massaging the request headers to match the change in body length
+    req.headers['content-length'] = `${req.body.length}`;
+
+    // Spring back-end doesn't use Basic Auth for token requests whereas express back-end does
+    // By now, you should have figured out that we modify spring back-end requests to match the express back-end
+    const value = new Buffer(`${clientConfig.clientId}:${clientConfig.clientSecret}`).toString('base64');
+    req.headers['authorization'] = `Basic ${value}`
+
+    const stream = new Readable();
+    stream._read = () => {};
+    stream.push(req.body);
+    stream.push(null);
+    delete req.body;
+    req.on = stream.on.bind(stream);
+    next();
+  });
+}
+
+/**
  * Transforms the incoming request to match a pre-recorded response that is
  * stored in the tapes/ dir, and rewrites the response to work with the
  * current request.
@@ -157,7 +199,7 @@ function transform(req, res, next) {
   debug(`${chalk.bold.yellow(req.method)} ${chalk.bold.yellow(req.url)}`);
 
   const query = util.parseQuery(req.url);
-  const data = util.mapRequestToCache(req);
+  const data = util.mapRequestToCache(req, record);
 
   // Request properties that are hashed by the incoming-message-hash module
   const reqParts = url.parse(req.url, true);
@@ -185,6 +227,15 @@ function transform(req, res, next) {
     debug('/authorize request, storing data');
     debug(data);
     store[data.state] = { state: data.state, nonce: data.nonce };
+    store['state'] = data.state;
+  }
+
+  // When we are redirecting back to the client,
+  // we need to restore the state to what was originally set
+  if (data.isRedirectCallback) {
+    debug('Need to restore the state');
+    debug(store);
+    data.state = store['state'];
   }
 
   // Retrieve stored data when okta_key is present - this is needed in the
@@ -270,6 +321,7 @@ const app = connect();
 const tapeDir = path.resolve(__dirname, 'tapes');
 
 app.use('/oauth2/default/v1/keys', handleKeys);
+app.use('/oauth2/default/v1/token', handleToken);
 app.use(transform);
 app.use(yakbak(config.proxied, { dirname: tapeDir, noRecord: !record }));
 

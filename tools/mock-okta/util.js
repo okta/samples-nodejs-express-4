@@ -22,6 +22,7 @@ const debug = require('debug')('mock-okta');
 const querystring = require('querystring');
 const jws = require('jws');
 const keys = require('./keys-test');
+const tokenHash = require('oidc-token-hash');
 
 const util = module.exports;
 
@@ -125,9 +126,10 @@ util.parseQuery = (urlStr) => {
  * values that can change between requests, browsers, or browser state.
  *
  * @arg {http.IncomingMessage} req
+ * @arg record {boolean} - flag to indicate if mock server is running in record mode
  * @return {object} data that is needed to reconstruct state in the response
  */
-util.mapRequestToCache = (req) => {
+util.mapRequestToCache = (req, record) => {
   const headers = req.headers;
   const orig = Object.assign({}, headers);
   const data = {};
@@ -146,8 +148,9 @@ util.mapRequestToCache = (req) => {
   headers['user-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; ' +
     'rv:48.0) Gecko/20100101 Firefox/48.0';
 
-  // PhantomJS uses "Keep-Alive" vs. "keep-alive"
-  headers.connection = headers.connection.toLowerCase();
+  // Due to the differences in back-ends while calling the /.well-known endpoint,
+  // we force the connection to 'keep-alive'
+  headers.connection = 'keep-alive'; 
 
   // Enforce a consistent accept-language and encoding
   headers['accept-language'] = 'en-US';
@@ -203,9 +206,13 @@ util.mapRequestToCache = (req) => {
     data.responseMode = query.response_mode;
     data.state = query.state;
     data.nonce = query.nonce;
+    
+    // Replace the state and nonce with known values.
+    // Ensure that scope query parameter is the same for all requests (same as recorded)
     req.url = req.url
       .replace(`state=${query.state}`, 'state=STATE')
-      .replace(`nonce=${query.nonce}`, 'nonce=NONCE');
+      .replace(`nonce=${query.nonce}`, 'nonce=NONCE')
+      .replace('profile%20email%20openid', 'openid%20profile%20email');
 
     // Start the flow with fresh cookies
     data.cookie = headers.cookie;
@@ -222,6 +229,23 @@ util.mapRequestToCache = (req) => {
   // in the response headers
   else if (req.url.indexOf('/sessions/me') > -1 && req.method === 'DELETE') {
     data.cookie = headers.cookie;
+  }
+
+  // We are redirecting to the client callback. We need to replace the state query parameter with
+  // the state stored in the tape before the redirect
+  else if (req.url.indexOf('/oauth2/v1/authorize/redirect') === 0) {
+    data.isRedirectCallback = true;
+  }
+
+  else if (req.url.indexOf('/oauth2/default/v1/token') === 0) {
+    data.isTokenReq = true;
+  }   
+
+  // Refer to this wiki to understand why we do this - https://oktawiki.atlassian.net/wiki/spaces/PM/pages/242104529/Mock+Server+for+samples
+  // Gist: /userinfo endpoint tape expects the same access_token that was used during recording
+  // Since we now sign the access_token in our mock-server, we need to replace it with the original access_token
+  else if (!record && req.url.indexOf('/oauth2/default/v1/userinfo') >= 0) {
+    headers['authorization'] = 'Bearer ' + keys.accessToken;
   }
 
   logDiff('Mapping incoming request headers to cache', orig, headers);
@@ -286,6 +310,15 @@ function swapIdToken(idToken, data) {
   // Replace issuer with this proxy server
   claims.iss = data.iss;
 
+  // Express back-end validates access_token using the at_hash claim
+  // Spring back-end validates the access_token using the signature & keys returned from jwks uri
+  // To ensure spring access_token validation doesn't fail we need to sign the access_token with our keys 
+  // This changes the payload of the access_token, which in turn changes the at_hash value
+  // Now we to update the at_hash claim with the new hash, which is what we do here. Phew!
+  if (data.at_hash != 'undefined') {
+    claims.at_hash = data.at_hash;
+  }
+  
   // Update expiration time to expire in 1 hour
   const exp = Math.floor(new Date().getTime() / 1000) + 3600;
   claims.exp = exp;
@@ -299,6 +332,46 @@ function swapIdToken(idToken, data) {
 }
 
 /**
+ * Swaps the cached access_token with a new access_token that has a valid nonce, issuer,
+ * and expiration time.
+ *
+ * @arg {string} access_token
+ * @arg {object} data
+ * @arg {string} data.nonce
+ * @arg {string} data.iss
+ */
+function swapAccessToken(accessToken, data) {
+  const decoded = jws.decode(accessToken);
+
+  const header = decoded.header;
+  const origHeader = Object.assign({}, header);
+  header.kid = keys.publicJwk.kid;
+
+  logDiff('Swapping accessToken.header claims', origHeader, header);
+
+  const claims = JSON.parse(decoded.payload);
+  const origClaims = Object.assign({}, claims);
+
+  // Replace nonce with the nonce sent by the client
+  claims.nonce = data.nonce;
+
+  // Replace issuer with this proxy server
+  claims.iss = data.iss;
+
+  // Update expiration time to expire in 1 hour
+  const exp = Math.floor(new Date().getTime() / 1000) + 3600;
+  claims.exp = exp;
+
+  logDiff('Swapping accessToken.payload claims', origClaims, claims);
+  return jws.sign({
+    header: decoded.header,
+    payload: claims,
+    secret: keys.privatePem,
+  });
+}
+
+
+/**
  * Modifies the outgoing response headers to map to the incoming request, and
  * removes headers that cause inconsistent client behavior.
  *
@@ -307,8 +380,9 @@ function swapIdToken(idToken, data) {
  * @arg {string} data.proxied - url
  * @arg {string} data.cdn - url
  * @arg {string} data.proxy - url
+ * @arg {boolean} record - flag to indicate if mock server is running in record mode
  */
-util.mapCachedHeadersToResponse = (headers, data) => {
+util.mapCachedHeadersToResponse = (headers, data, record) => {
   // Replace any proxied urls with this proxy server
   const mapped = {};
   Object.keys(headers).forEach((key) => {
@@ -319,9 +393,10 @@ util.mapCachedHeadersToResponse = (headers, data) => {
     mapped[key] = val;
   });
 
-  // Replace state in the redirect from the authorization flow
-  if (data.state && mapped.location) {
-    mapped.location = mapped.location.replace('state=STATE', `state=${data.state}`);
+  // Replace state in the redirect from the authorization flow (only during playback of the tapes)
+  // While recording the tapes, we store whatever state is generated by the middleware into the tapes
+  if (data.isRedirectCallback) {
+    mapped.location = mapped.location.replace('state=STATE', `state=${data.state}`);   
   }
 
   // Turn off any caching headers to ensure consistent client requests,
@@ -339,9 +414,11 @@ util.mapCachedHeadersToResponse = (headers, data) => {
  * Modifies the outgoing response body to map to the incoming request:
  * - Urls pointing to the proxied server are replaced with the proxy
  * - Replace variables that were stripped from the request, i.e state and nonce
+ * - Swap out the id_token and access_token as needed
  *
  * @arg {string} chunk - Part or all of the response, depending on the size.
  * @arg {object} data - Request data used for replacing response content
+ * @arg {boolean} record - Flag to indicate if we're in record mode
  *
  * Data about the proxy and the proxied server
  * @arg {string} data.proxy - url, i.e. http://localhost:7777
@@ -359,7 +436,7 @@ util.mapCachedHeadersToResponse = (headers, data) => {
  *
  * @return {string} modified response body
  */
-util.mapCachedBodyToResponse = (chunk, data) => {
+util.mapCachedBodyToResponse = (chunk, data, record) => {
   // Replace any proxied urls with the proxy server
   let newChunk = replaceUrls(chunk, data);
 
@@ -375,20 +452,50 @@ util.mapCachedBodyToResponse = (chunk, data) => {
       nonce: data.nonce,
       iss: issuer,
     });
-    newChunk = newChunk
-      .replace('STATE', data.state)
-      .replace(idToken, newIdToken);
-  }
+    newChunk = newChunk.replace(idToken, newIdToken);
 
-  // When the id_token is returned from the token endpoint, we just need to
-  // swap the id_token in the json body
-  if (data.isTokenReq) {
-    const idToken = newChunk.match(/"id_token":"([^"]+)"/)[1];
-    const newIdToken = swapIdToken(idToken, {
+    const accessToken = newChunk.match(/"access_token":"([^"]+)"/)[1];
+    const newAccessToken = swapAccessToken(accessToken, {
       nonce: data.nonce,
       iss: issuer,
     });
-    newChunk = newChunk.replace(idToken, newIdToken);
+    newChunk = newChunk.replace(accessToken, newAccessToken);
+  }
+
+  // When the id_token is returned from the token endpoint, we just need to
+  // swap the id_token in the json body 
+  // For spring back-end, we also need to swap the access_token by signing it
+  // with our own private key
+  if (data.isTokenReq) {
+    // Always record tapes using express back-end, where we only need to swap id_token
+    // For express, we don't need to sign the access_token
+    if (record) {
+      const idToken = newChunk.match(/"id_token":"([^"]+)"/)[1];
+      const newIdToken = swapIdToken(idToken, {
+        nonce: data.nonce,
+        iss: issuer
+      });
+      newChunk = newChunk.replace(idToken, newIdToken);
+    } else {
+      // While playing back the tapes, sign access_token with our key and swap it
+      const accessToken = newChunk.match(/"access_token":"([^"]+)"/)[1];
+      const newAccessToken = swapAccessToken(accessToken, {
+        nonce: data.nonce,
+        iss: issuer,
+      });
+      newChunk = newChunk.replace(accessToken, newAccessToken);
+      
+      // Calculate the new at_hash and add it in the id_token payload
+      const atHash = tokenHash.generate(newAccessToken, 'sha256');
+  
+      const idToken = newChunk.match(/"id_token":"([^"]+)"/)[1];
+      const newIdToken = swapIdToken(idToken, {
+        nonce: data.nonce,
+        iss: issuer,
+        at_hash: atHash
+      });
+      newChunk = newChunk.replace(idToken, newIdToken);
+    }
   }
 
   return newChunk;

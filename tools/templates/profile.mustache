@@ -19,9 +19,6 @@
           <a id="item-login-redirect" data-se="auth-code-login-redirect" class="item" href="/authorization-code/login-redirect">
             Login by redirecting to Okta
           </a>
-          <a id="item-login-custom" data-se="auth-code-login-custom" class="item" href="/authorization-code/login-custom">
-            Create a custom login page
-          </a>
         </div>
       </div>
     </div>
@@ -38,44 +35,17 @@
     <a href="https://tools.ietf.org/html/rfc6749#section-4.1">
       Authorization Code Grant
     </a>
-    flow, where the <strong>id_token</strong> is used to set a session cookie:
+    flow, to log a user into your application, using Okta's Middleware library. </br></br>
+    The Middleware library handles the following steps 
     <ol class="ui list">
       <li>
-        Redirect to the
-        <a href="http://developer.okta.com/docs/api/resources/oidc.html#authentication-request">
-          /authorize
-        </a>
-        endpoint to get an <strong>authorization code</strong>
-        <div class="ui info message">
-          In the custom login flow, we were able to skip authentication in the
-          redirect by passing the <strong>sessionToken</strong> returned from
-          logging in through the
-          <a href="http://developer.okta.com/code/javascript/okta_sign-in_widget.html">
-            Sign-In Widget
-          </a>
-        </div>
+        Redirect to the <a href="http://developer.okta.com/docs/api/resources/oidc.html#authentication-request">/authorize</a> endpoint to get an <strong>authorization code</strong>
       </li>
       <li>
-        Exchange the <strong>authorization code</strong> for an
-        <strong>id_token</strong> using the
-        <a href="http://developer.okta.com/docs/api/resources/oidc.html#token-request">
-          /token
-        </a> endpoint
+        Authenticate the user and exchange the <strong>authorization code</strong> for an <strong>id_token</strong>
       </li>
       <li>
-        <a href="http://developer.okta.com/docs/api/resources/oidc.html#validating-id-tokens">
-          Validate the <strong>id_token</strong> claims and signature
-        </a>
-      </li>
-      <li>
-        Set a session cookie with the profile information returned from
-        the <strong>id_token</strong>
-        <div class="ui info message">
-          Check out the documentation to
-          <a href="http://developer.okta.com/docs/api/resources/oidc.html#id-token-claims">
-            see what other claims are returned in the <strong>id_token</strong>
-          </a>.
-        </div>
+        Use the <strong>id_token</strong> to set the user session
       </li>
     </ol>
   </p>
@@ -128,9 +98,11 @@
      {{#user}}
      options.user = {
        email: '{{user.email}}',
-       iss: '{{user.claims.iss}}',
-       iat: {{user.claims.iat}},
-       exp: {{user.claims.exp}}
+       givenName: '{{user.given_name}}',
+       familyName: '{{user.family_name}}',
+       subject: '{{user.sub}}',
+       zoneInfo: '{{user.zoneinfo}}',
+       locale: '{{user.locale}}'
      };
      {{/user}}
 

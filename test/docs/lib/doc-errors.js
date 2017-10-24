@@ -21,7 +21,7 @@ exports.MISSING_README_START_SCRIPT = `
 
       Example:
       --------
-      python3 lib/manage.py runserver 3000
+      python3 lib/manage.py runserver 8080
       --------
 `;
 
