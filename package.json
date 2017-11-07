@@ -1,9 +1,6 @@
 {
   "name": "@okta/samples-nodejs-express-4",
   "version": "3.0.0",
-  "publishConfig": {
-    "registry": "https://artifacts.aue1d.saasure.com/artifactory/api/npm/npm-okta"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/okta/samples-nodejs-express-4.git"
