@@ -1,0 +1,25 @@
+{
+  "name": "okta-hosted-login-express-example",
+  "version": "1.0.0",
+  "description": "This example shows you how to use the oidc-middleware library to login a user.",
+  "engines": {
+    "node": ">=7.5"
+  },
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "postinstall": "node post-install.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@okta/oidc-middleware": "0.0.14",
+    "consolidate": "^0.15.0",
+    "express": "^4.16.2",
+    "express-session": "^1.15.6",
+    "mustache": "^2.3.0"
+  },
+  "private": true
+}

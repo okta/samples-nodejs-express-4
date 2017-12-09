@@ -1,0 +1,23 @@
+{
+  "name": "okta-resource-server-express-example",
+  "version": "1.0.0",
+  "description": "This example shows you how to use the JWT verifier to authenticate requests.",
+  "engines": {
+    "node": ">=7.5"
+  },
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "postinstall": "node post-install.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@okta/jwt-verifier": "0.0.10",
+    "cors": "^2.8.4",
+    "express": "^4.16.2"
+  },
+  "private": true
+}
