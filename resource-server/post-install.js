@@ -6,7 +6,7 @@ const sampleConfig = {
       issuer: 'https://{yourOktaDomain}.com/oauth2/default'
     },
     server: {
-      port: 8080
+      port: 8000
     }
   }
 };
