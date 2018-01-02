@@ -36,14 +36,14 @@
 
           {{^isLoggedIn}}
             <p>Hello!</p>
-            <p>If you're viewing this page then you have sucessfully configured this example server.  Your server configuration is listed on the right.</p>
-            <p>This example shows you how to use the <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> to add the <a href="https://developer.okta.com/authentication-guide/implementing-authentication/auth-code.html">Authorization Code Flow</a> to your application.
+            <p>If you're viewing this page then you have successfully configured this example server.  Your server configuration is listed on the right.</p>
+            <p>This example shows you how to use the <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> to add the <a href="https://developer.okta.com/authentication-guide/implementing-authentication/auth-code.html">Authorization Code Flow</a> to your application.</p>
             <p>When you click the login button below, you will be redirected to the login page on your Okta org.  After you authenticate, you will be returned to this application where a local cookie session will be created for you.</p>
           {{/isLoggedIn}}
 
           {{#isLoggedIn}}
             <p>Welcome back, {{userinfo.name}}!</p>
-            <p>You have succesffuly authenticated against your Okta org, and have been redirected back to this application.  Here are some cool things to know:</p>
+            <p>You have successfully authenticated against your Okta org, and have been redirected back to this application.  Here are some cool things to know:</p>
             <ul>
                 <li>The <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> library has created a local cookie session for you, to persist your authentication.</li>
               <li>The session contains the information retrieved from the <a href="https://developer.okta.com/docs/api/resources/oidc.html#get-user-information">User Info Endpoint</a> of the cofigured issuser. This information is automatically persisted for you, and can be read from <code>req.userinfo</code></li>
