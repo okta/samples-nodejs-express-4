@@ -16,10 +16,10 @@
       <div id="section-authorization-code" class="item">
         <div class="menu">
           {{#isLoggedIn}}
-            <a id="item-logout" data-se="logout" class="item" href="/profile">
+            <a id="profile-button" data-se="profile" class="item" href="/profile">
               My Profile
             </a>
-            <a id="item-logout" data-se="logout" class="item" href="/logout">
+            <a id="logout-button" data-se="logout" class="item" href="/logout">
               Logout
             </a>
           {{/isLoggedIn}}
@@ -36,7 +36,7 @@
           <p>Hello, {{userinfo.name}}. Below is the information that was read from the <a href="https://developer.okta.com/docs/api/resources/oidc.html#get-user-information">User Info Endpoint</a>
             and persisted by the <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> at <code>req.userinfo</code>.
           </p>
-          <p>This route is protectd with the <code>oidc.ensureAuthenticated()</code> middleware, which will ensure that this page cannot be accessed until you have authenticated.</p>
+          <p>This route is protected with the <code>oidc.ensureAuthenticated()</code> middleware, which will ensure that this page cannot be accessed until you have authenticated.</p>
         </div>
         <table class="ui table compact collapsing">
           <thead>
@@ -49,7 +49,7 @@
             {{#attributes}}
               <tr>
                 <td>{{0}}</td>
-                <td>{{1}}</td>
+                <td id="claim-{{0}}">{{1}}</td>
               </tr>
             {{/attributes}}
           </tbody>
