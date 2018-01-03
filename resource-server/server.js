@@ -7,7 +7,8 @@ const config = require('./.samples.config.json').oktaSample;
 const oktaJwtVerifier = new OktaJwtVerifier({
   issuer: config.oidc.issuer,
   assertClaims: {
-    aud: 'api://default',
+    aud: config.oidc.aud,
+    cid: config.oidc.clientId
   },
 });
 

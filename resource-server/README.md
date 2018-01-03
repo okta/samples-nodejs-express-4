@@ -13,9 +13,7 @@ Before running this sample, you will need the following:
 * An OIDC application in your Org, configured for Singe-Page-App mode. You can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
 * One of our front-end sample applications:
   * [Okta Angular Sample Apps][]
-  * [Okta AngularJS Sample Apps][]
   * [Okta React Sample Apps][]
-  * [Okta Sign-In Widget Sample Apps][]
 
 ## Running This Example
 
@@ -32,12 +30,14 @@ Then install dependencies:
 npm install
 ```
 
-You will need to provider the issuer to the sample server. This setting can be found in the Developer Console, when looking at the Application that you created.  Place the issuer into the file `.samples.config.json` in this folder:
+You will need to provide the issuer, client ID and audience to the sample server. This setting can be found in the Developer Console, when looking at the Application that you created.  Place this configuration into the file `.samples.config.json` in this folder:
 
 ```
 {
   "oktaSample": {
     "oidc": {
+      "aud": "api://default",
+      "clientId: "{yourClientId}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default"
     },
     "server": {
@@ -59,10 +59,9 @@ At this point you should be able to navigate to http://localhost:8080
 If you see a basic welcome message, then things are working!  At this point you should open a new terminal window and run the front-end sample project.  Once the front-end sample is running, you should be able to visit http://localhost:8000 and be presented with login information.
 
 [Okta Angular Sample Apps]: https://github.com/okta/samples-js-angular
-[Okta AngularJS Sample Apps]: https://github.com/okta/samples-js-angular-1
 [Okta React Sample Apps]: https://github.com/okta/samples-js-react
 [Okta JWT Verifier]: https://www.npmjs.com/package/@okta/jwt-verifier
 [OIDC SPA Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit#1-setting-up-your-application
 
-[Implicit Flow]: ****https://developer.okta.com/authentication-guide/implementing-authentication/implicit
+[Implicit Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit
 

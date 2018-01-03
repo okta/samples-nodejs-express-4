@@ -8,7 +8,6 @@ const config = require('./.samples.config.json').oktaSample;
 const templateDir = path.join(__dirname, 'views');
 const frontendDir = path.join(__dirname, 'assets');
 
-
 const oidc = new ExpressOIDC({
   issuer: config.oidc.issuer,
   client_id: config.oidc.clientId,
@@ -25,11 +24,18 @@ app.use(session({
   saveUninitialized: false
 }));
 
-// Provide the configuration to the view layer, as we show it on the homepage
-const displayConfig = Object.assign({}, config.oidc, { clientSecret: '****' + config.oidc.clientSecret.substr(config.oidc.clientSecret.length - 4, 4)});
+// Provide the configuration to the view layer because we show it on the homepage
+const displayConfig = Object.assign(
+  {},
+  config.oidc,
+  {
+    clientSecret: '****' + config.oidc.clientSecret.substr(config.oidc.clientSecret.length - 4, 4)
+  }
+);
 
 app.locals.oidcConfig = displayConfig;
 
+// This server uses mustache templates located in views/ and css assets in assets/
 app.use('/assets', express.static(frontendDir));
 app.engine('mustache', cons.mustache);
 app.set('view engine', 'mustache');
@@ -46,7 +52,7 @@ app.get('/', (req, res) => {
 
 app.get('/profile', oidc.ensureAuthenticated(), (req, res) => {
   // Convert the userinfo object into an attribute array, for rendering with mustache
-  const attributes = Object.entries(req.userinfo)
+  const attributes = Object.entries(req.userinfo);
   res.render('profile', {
     isLoggedIn: !!req.userinfo,
     userinfo: req.userinfo,
@@ -62,6 +68,7 @@ app.get('/logout', (req, res) => {
 oidc.on('ready', () => {
   app.listen(config.server.port, () => console.log(`App started on port ${config.server.port}`));
 });
+
 oidc.on('error', err => {
   // An error occurred while setting up OIDC
   throw err;
