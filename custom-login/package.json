@@ -18,6 +18,7 @@
     "@okta/oidc-middleware": "0.0.14",
     "colors": "^1.1.2",
     "consolidate": "^0.15.0",
+    "csurf": "^1.9.0",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
     "mustache": "^2.3.0"
