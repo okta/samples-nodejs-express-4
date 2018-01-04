@@ -20,4 +20,4 @@ const oidcMiddlewareConfig = {
 /**
  * Bootstrap the sample web server with the additional configuration for the custom login page
  */
-new SampleWebServer(sampleConfig.webServer, oidcMiddlewareConfig);
+new SampleWebServer(sampleConfig.webServer, oidcMiddlewareConfig, 'custom-login-home');

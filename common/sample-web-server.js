@@ -13,7 +13,7 @@ const { ExpressOIDC } = require('@okta/oidc-middleware');
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
 
-module.exports = function SampleWebServer(sampleConfig, extraOidcOptions) {
+module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
 
   const oidc = new ExpressOIDC(Object.assign({
     issuer: sampleConfig.oidc.issuer,
@@ -51,7 +51,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions) {
   app.use(oidc.router);
 
   app.get('/', (req, res) => {
-    res.render('home', {
+    const template = homePageTemplateName || 'home';
+    res.render(template, {
       isLoggedIn: !!req.userinfo,
       userinfo: req.userinfo
     });
