@@ -11,8 +11,8 @@
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
     "postinstall": "node post-install.js",
-    "custom-login-server": "node custom-login/server.js",
-    "okta-hosted-login-server": "node okta-hosted-login/server.js",
+    "custom-login": "node custom-login/server.js",
+    "okta-hosted-login": "node okta-hosted-login/server.js",
     "resource-server": "node resource-server/server.js",
     "test": "echo \"Tests not yet implemented\""
   },

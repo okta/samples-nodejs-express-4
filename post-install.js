@@ -15,12 +15,11 @@ const sampleConfig = {
     port: 8000,
     oidc: {
       issuer: 'https://{yourOktaDomain}.com/oauth2/default',
-      clientId: '{yourWebApplicationClientId}',
-      clientSecret: '{yourWebApplicationClientSecret}'
+      clientId: '{yourWebApplicationClientId}'
     },
     assertClaims: {
       aud: 'api://default',
-      cid: '{clientIdOfYourSpaApplication}'
+      cid: '{yourSpaApplicationClientId}'
     }
   }
 };

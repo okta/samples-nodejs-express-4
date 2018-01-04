@@ -54,7 +54,7 @@ These settings can be found in the Developer Console, when looking at the Applic
 Now you should be able to run the app server:
 
 ```
-npm start
+npm run custom-login
 ```
 
 At this point you should be able to navigate to http://localhost:8080

@@ -55,7 +55,7 @@ These settings can be found in the Developer Console.  Place these values into t
 Now you should be able to run the app server:
 
 ```
-npm run okta-hosted-login-server
+npm run okta-hosted-login
 ```
 
 At this point you should be able to navigate to http://localhost:8080

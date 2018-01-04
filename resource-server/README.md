@@ -44,7 +44,7 @@ You will need to provide the configuration for an OIDC Web Application and an OI
     },
     "assertClaims": {
       "aud": "api://default",
-      "cid": "{clientIdOfYourSpaApplication}"
+      "cid": "{yourSpaApplicationClientId}"
     }
   }
 }

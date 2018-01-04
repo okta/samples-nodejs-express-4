@@ -77,5 +77,5 @@ app.get('/api/messages', authenticationRequired, (req, res) => {
 });
 
 app.listen(sampleConfig.resourceServer.port, () => {
-  console.log(`Server Ready on port ${sampleConfig.resourceServer.port}`);
+  console.log(`Resource Server Ready on port ${sampleConfig.resourceServer.port}`);
 });
