@@ -6,7 +6,7 @@ const sampleConfig = {
     oidc: {
       issuer: 'https://{yourOktaDomain}.com/oauth2/default',
       clientId: '{yourWebApplicationClientId}',
-      clientSecret: '{yourWebApplicationClientId}',
+      clientSecret: '{yourWebApplicationClientSecret}',
       redirectUri: 'http://localhost:8080/authorization-code/callback',
       scope: 'openid profile email'
     },
@@ -16,7 +16,7 @@ const sampleConfig = {
     oidc: {
       issuer: 'https://{yourOktaDomain}.com/oauth2/default',
       clientId: '{yourWebApplicationClientId}',
-      clientSecret: '{yourWebApplicationClientId}'
+      clientSecret: '{yourWebApplicationClientSecret}'
     },
     assertClaims: {
       aud: 'api://default',
