@@ -4,9 +4,9 @@
  * and logout functionality.
  */
 
-const cons = require('consolidate');
 const express = require('express');
 const session = require('express-session');
+const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
@@ -44,7 +44,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions) {
 
   // This server uses mustache templates located in views/ and css assets in assets/
   app.use('/assets', express.static(frontendDir));
-  app.engine('mustache', cons.mustache);
+  app.engine('mustache', mustacheExpress());
   app.set('view engine', 'mustache');
   app.set('views', templateDir);
 
@@ -73,7 +73,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions) {
   });
 
   oidc.on('ready', () => {
-    app.listen(sampleConfig.server.port, () => console.log(`App started on port ${sampleConfig.server.port}`));
+    app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
   });
 
   oidc.on('error', err => {

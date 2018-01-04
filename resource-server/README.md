@@ -10,6 +10,7 @@ The access tokens are obtained via the [Implicit Flow][].  As such, you will nee
 Before running this sample, you will need the following:
 
 * An Okta Developer Org, you can sign up for one at https://developer.okta.com/signup/.
+* An OIDC application in your Org, configured for Web mode. You can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
 * An OIDC application in your Org, configured for Singe-Page-App mode. You can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
 * One of our front-end sample applications:
   * [Okta Angular Sample Apps][]
@@ -30,18 +31,20 @@ Then install dependencies:
 npm install
 ```
 
-You will need to provide the issuer, client ID and audience to the sample server. This setting can be found in the Developer Console, when looking at the Application that you created.  Place this configuration into the file `.samples.config.json` in this folder:
+You will need to provide the configuration for an OIDC Web Application and an OIDC Spa Application. These settings can be found in the Developer Console.  Place these values into the file `.samples.config.json` that was created for you:
 
-```
+```json
 {
-  "oktaSample": {
+  "resourceServer": {
+    "port": 8000,
     "oidc": {
-      "aud": "api://default",
-      "clientId: "{yourClientId}",
-      "issuer": "https://{yourOktaDomain}.com/oauth2/default"
+      "issuer": "https://{yourOktaDomain}.com/oauth2/default",
+      "clientId": "{yourWebApplicationClientId}",
+      "clientSecret": "{yourWebApplicationClientId}"
     },
-    "server": {
-      "port": 8080
+    "assertClaims": {
+      "aud": "api://default",
+      "cid": "{clientIdOfYourSpaApplication}"
     }
   }
 }
@@ -51,7 +54,7 @@ You will need to provide the issuer, client ID and audience to the sample server
 Now you should be able to run the resource server:
 
 ```
-npm start
+npm run resource-server
 ```
 
 At this point you should be able to navigate to http://localhost:8080

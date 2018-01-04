@@ -20,7 +20,7 @@ To run this application, you first need to clone this repo and then enter into t
 
 ```bash
 git clone git@github.com:okta/samples-nodejs-express-4.git
-cd samples-nodejs-express-4/okta-hosted-login
+cd samples-nodejs-express-4/
 ```
 
 Then install dependencies:
@@ -35,19 +35,18 @@ You will need to provide these values to the sample application:
 * Client Secret
 * Issuer
 
-These settings can be found in the Developer Console, when looking at the Application that you created.  Place them into the file `.samples.config.json` in this folder:
+These settings can be found in the Developer Console.  Place these values into the file `.samples.config.json` that was created for you:
 
 ```
 {
-  "oidc": {
-    "oktaUrl": "https://{yourOktaDomain}.com/",
-    "issuer": "https://{yourOktaDomain}.com/oauth2/default",
-    "clientId": "your_client_id",
-    "clientSecret": "your_client_secret",
-    "redirectUri": "http://localhost:8080/authorization-code/callback"
-  },
-  "server": {
-    "port": 8080
+  "webServer": {
+    "port": 8080,
+    "oidc": {
+      "clientId": "{yourWebApplicationClientId}",
+      "clientSecret": "{yourWebApplicationClientId}",
+      "issuer": "https://{yourOktaDomain}.com/oauth2/default",
+      "redirectUri": "http://localhost:8080/authorization-code/callback"
+    },
   }
 }
 
@@ -56,7 +55,7 @@ These settings can be found in the Developer Console, when looking at the Applic
 Now you should be able to run the app server:
 
 ```
-npm start
+npm run okta-hosted-login-server
 ```
 
 At this point you should be able to navigate to http://localhost:8080

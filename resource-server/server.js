@@ -2,14 +2,11 @@ const express = require('express');
 const OktaJwtVerifier = require('@okta/jwt-verifier');
 var cors = require('cors');
 
-const config = require('./.samples.config.json').oktaSample;
+const sampleConfig = require('../.samples.config.json');
 
 const oktaJwtVerifier = new OktaJwtVerifier({
-  issuer: config.oidc.issuer,
-  assertClaims: {
-    aud: config.oidc.aud,
-    cid: config.oidc.clientId
-  },
+  issuer: sampleConfig.resourceServer.oidc.issuer,
+  assertClaims: sampleConfig.resourceServer.assertClaims
 });
 
 /**
@@ -79,6 +76,6 @@ app.get('/api/messages', authenticationRequired, (req, res) => {
   });
 });
 
-app.listen(config.server.port, () => {
-  console.log(`Server Ready on port ${config.server.port}`);
+app.listen(sampleConfig.resourceServer.port, () => {
+  console.log(`Server Ready on port ${sampleConfig.resourceServer.port}`);
 });
