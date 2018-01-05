@@ -17,7 +17,7 @@ To run this application, you first need to clone this repo and then enter into t
 
 ```bash
 git clone git@github.com:okta/samples-nodejs-express-4.git
-cd samples-nodejs-express-4/okta-hosted-login
+cd samples-nodejs-express-4/
 ```
 
 Then install dependencies:
@@ -30,7 +30,7 @@ Now you need to gather the following information from the Okta Developer Console
 
 - **Client ID** and **Client Secret** - This can be found on the "General" tab of an application, you want to get this for the Web application that you created earlier.
 
-- **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`.
+- **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.oktapreview.com/oauth2/default`.
 
 Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
 
@@ -42,7 +42,8 @@ Now place these values into the file `.samples.config.json` that was created for
       "clientId": "{clientId}",
       "clientSecret": "{clientSecret}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default",
-      "redirectUri": "http://localhost:8080/authorization-code/callback"
+      "redirectUri": "http://localhost:8080/authorization-code/callback",
+      "scope": "openid profile email"
     },
   }
 }

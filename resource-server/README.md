@@ -33,7 +33,7 @@ npm install
 Now you need to gather the following information from the Okta Developer Console:
 
 - **Client Id** - The client ID of the SPA application that you created earlier. This can be found on the "General" tab of an application, or the list of applications.  The resource server will validate that tokens have been minted for this application.
-- **Issuer** - This is the URL of the authorization server that minted the tokens.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`.
+- **Issuer** - This is the URL of the authorization server that minted the tokens.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.oktapreview.com/oauth2/default`.
 
 Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
 
