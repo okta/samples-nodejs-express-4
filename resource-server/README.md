@@ -1,4 +1,4 @@
-# Express.js Resource Server Example
+# Express Resource Server Example
 
 This sample application uses the [Okta JWT Verifier][] library to authenticate requests against your Express application, using access tokens.
 
@@ -66,5 +66,5 @@ If you see a basic welcome message, then things are working!  Now open a new ter
 [Implicit Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit
 [Okta Angular Sample Apps]: https://github.com/okta/samples-js-angular
 [Okta React Sample Apps]: https://github.com/okta/samples-js-react
-[Okta JWT Verifier]: https://www.npmjs.com/package/@okta/jwt-verifier
+[Okta JWT Verifier]: https://github.com/okta/okta-oidc-js/tree/master/packages/jwt-verifier
 [OIDC SPA Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit#1-setting-up-your-application

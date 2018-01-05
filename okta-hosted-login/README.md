@@ -1,4 +1,4 @@
-# Express.js & Okta-Hosted Login Page Example
+# Express & Okta-Hosted Login Page Example
 
 This example shows you how to use the [OIDC Middleware Library][] to login a user.  The login is achieved through the [Authorization Code Flow], where the user is redirected to the Okta-Hosted login page.  After the user authenticates, they are redirected back to the application and a local cookie session is created using [express-session][].
 
