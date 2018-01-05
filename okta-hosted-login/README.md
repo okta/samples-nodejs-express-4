@@ -1,18 +1,15 @@
 # Express.js & Okta-Hosted Login Page Example
 
-This example shows you how to use the [OIDC Middleware Library][] to login a user.  The login is achieved through the [OAuth 2.0 Authorization Code Flow], where the user is redirected to the Okta-Hosted login page.  After the user authenticates, they are redirected back to the application and a local cookie session is created using [express-session][].
+This example shows you how to use the [OIDC Middleware Library][] to login a user.  The login is achieved through the [Authorization Code Flow], where the user is redirected to the Okta-Hosted login page.  After the user authenticates, they are redirected back to the application and a local cookie session is created using [express-session][].
 
 
 ## Prerequisites
 
 Before running this sample, you will need the following:
 
-* An Okta Developer Org, you can sign up for one at https://developer.okta.com/signup/.
-* An OIDC application in your Org, configured for Web mode. You can find instructions [here][OIDC Web Application Setup Instructions].  When following the wizard, use the default properties.  They are designed to work with our sample applications.
+* An Okta Developer Account, you can sign up for one at https://developer.okta.com/signup/.
+* An Okta Application, configured for Web mode. This is done from the Okta Developer Console and you can find instructions [here][OIDC Web Application Setup Instructions].  When following the wizard, use the default properties.  They are designed to work with our sample applications.
 
-[OIDC Web Application Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/auth-code#1-setting-up-your-application
-
-[OAuth 2.0 authorization code flow]: https://developer.okta.com/authentication-guide/implementing-authentication/auth-code
 
 ## Running This Example
 
@@ -29,21 +26,21 @@ Then install dependencies:
 npm install
 ```
 
-You will need to provide these values to the sample application:
+Now you need to gather the following information from the Okta Developer Console:
 
-* Client ID
-* Client Secret
-* Issuer
+- **Client ID** and **Client Secret** - This can be found on the "General" tab of an application, you want to get this for the Web application that you created earlier.
 
-These settings can be found in the Developer Console.  Place these values into the file `.samples.config.json` that was created for you:
+- **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`.
+
+Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
 
 ```json
 {
   "webServer": {
     "port": 8080,
     "oidc": {
-      "clientId": "{yourWebApplicationClientId}",
-      "clientSecret": "{yourWebApplicationClientSecret}",
+      "clientId": "{clientId}",
+      "clientSecret": "{clientSecret}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default",
       "redirectUri": "http://localhost:8080/authorization-code/callback"
     },
@@ -52,20 +49,21 @@ These settings can be found in the Developer Console.  Place these values into t
 
 ```
 
-Now you should be able to run the app server:
+Now start the app server:
 
 ```
 npm run okta-hosted-login
 ```
 
-At this point you should be able to navigate to http://localhost:8080
+Now navigate to http://localhost:8080 in your browser.
 
-If you see a home page that prompts you to login, then things are working!  When you click the login button you shoud be redirected to the Okta login page, where you will be prompted to login.
+If you see a home page that prompts you to login, then things are working!  Clicking the **Log in** button will redirect you to the Okta hosted sign-in page.
 
-You can login with the same account that you created when signing up for your Developer Org, or you can use a known user in your Okta Directory.
+You can login with the same account that you created when signing up for your Developer Org, or you can use a known username and password from your Okta Directory.
 
-**Note:** If you are currently using your Developer Console, you already have a Single Sign-On (SSO) session for your Org.  You will be automatically logged into your application as the same user that is using the Developer Console.
+**Note:** If you are currently using your Developer Console, you already have a Single Sign-On (SSO) session for your Org.  You will be automatically logged into your application as the same user that is using the Developer Console.  You may want to use an incognito tab to test the flow from a blank slate.
 
 [express-session]: https://github.com/expressjs/session
 [OIDC Middleware Library]: https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware
-[OAuth 2.0 Authorization Code Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/auth-code
+[Authorization Code Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/auth-code
+[OIDC Web Application Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/auth-code#1-setting-up-your-application

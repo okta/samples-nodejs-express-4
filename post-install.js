@@ -5,8 +5,8 @@ const sampleConfig = {
     port: 8080,
     oidc: {
       issuer: 'https://{yourOktaDomain}.com/oauth2/default',
-      clientId: '{yourWebApplicationClientId}',
-      clientSecret: '{yourWebApplicationClientSecret}',
+      clientId: '{clientId}',
+      clientSecret: '{clientSecret}',
       redirectUri: 'http://localhost:8080/authorization-code/callback',
       scope: 'openid profile email'
     },

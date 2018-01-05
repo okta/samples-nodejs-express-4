@@ -9,8 +9,8 @@ The access tokens are obtained via the [Implicit Flow][].  As such, you will nee
 
 Before running this sample, you will need the following:
 
-* An Okta Developer Org, you can sign up for one at https://developer.okta.com/signup/.
-* An Application in your Org, configured for Singe-Page-App (SPA) mode. You can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
+* An Okta Developer Account, you can sign up for one at https://developer.okta.com/signup/.
+* An Okta Application, configured for Singe-Page App (SPA) mode. This is done from the Okta Developer Console and you can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
 * One of our front-end sample applications to demonstrate the interaction with the resource server:
   * [Okta Angular Sample Apps][]
   * [Okta React Sample Apps][]
@@ -21,7 +21,7 @@ To run this application, you first need to clone this repo and then enter into t
 
 ```bash
 git clone git@github.com:okta/samples-nodejs-express-4.git
-cd samples-nodejs-express-4/resource-server
+cd samples-nodejs-express-4/
 ```
 
 Then install dependencies:
@@ -30,7 +30,12 @@ Then install dependencies:
 npm install
 ```
 
-You will need to provide the client ID of your SPA application, so that the resource server can validate that the access token was minted for that application. Place these values into the file `.samples.config.json` that was created for you in the root of this project:
+Now you need to gather the following information from the Okta Developer Console:
+
+- **Client Id** - The client ID of the SPA application that you created earlier. This can be found on the "General" tab of an application, or the list of applications.  The resource server will validate that tokens have been minted for this application.
+- **Issuer** - This is the URL of the authorization server that minted the tokens.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`.
+
+Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
 
 ```json
 {
@@ -54,14 +59,12 @@ Now start the resource server:
 npm run resource-server
 ```
 
-At this point you should be able to open http://localhost:8000 in your browser.
+Now navigate to http://localhost:8000 in your browser.
 
-If you see a basic welcome message, then things are working!  At this point you should open a new terminal window and run the front-end sample project of your choice (see links in Prerequisites).  Once the front-end sample is running, you should be able to visit http://localhost:8080 and be prompted to login.  Once logged in you can navigate to the "Messages" page to see the interaction with the resource server.
+If you see a basic welcome message, then things are working!  Now open a new terminal window and run the front-end sample project of your choice (see links in Prerequisites).  Once the front-end sample is running, you can navigate to http://localhost:8080 in your browser and log in to the front-end application.  Once logged in you can navigate to the "Messages" page to see the interaction with the resource server.
 
+[Implicit Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit
 [Okta Angular Sample Apps]: https://github.com/okta/samples-js-angular
 [Okta React Sample Apps]: https://github.com/okta/samples-js-react
 [Okta JWT Verifier]: https://www.npmjs.com/package/@okta/jwt-verifier
 [OIDC SPA Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit#1-setting-up-your-application
-
-[Implicit Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit
-

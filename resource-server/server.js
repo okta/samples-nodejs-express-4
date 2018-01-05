@@ -70,7 +70,7 @@ app.get('/api/messages', authenticationRequired, (req, res) => {
       },
       {
         date:  new Date(new Date().getTime() - 1000 * 60 * 60),
-        text: 'Hello, word!'
+        text: 'Hello, world!'
       }
     ]
   });
