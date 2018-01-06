@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+  </head>
+  <body id="samples">
+
+    {{>menu}}
+
+    <div id="content" class="ui padded grid relaxed">
+      <div id="doc" class="column eight wide">
+        <div class="doc-overview">
+
+          <h2 class="ui dividing header" data-se="overview-doc-header">
+            Okta Hosted Login + Express JS Example
+          </h2>
+
+          {{^isLoggedIn}}
+            <p>Hello!</p>
+            <p>If you're viewing this page then you have successfully configured this example server.  Your server configuration is listed on the right.</p>
+            <p>This example shows you how to use the <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> to add the <a href="https://developer.okta.com/authentication-guide/implementing-authentication/auth-code">Authorization Code Flow</a> to your application.</p>
+            <p>When you click the login button below, you will be redirected to the login page on your Okta org.  After you authenticate, you will be returned to this application where a local cookie session will be created for you.</p>
+          {{/isLoggedIn}}
+
+          {{#isLoggedIn}}
+            <p>Welcome back, {{userinfo.name}}!</p>
+            <p>You have successfully authenticated against your Okta org, and have been redirected back to this application.  Here are some cool things to know:</p>
+            <ul>
+              <li>The <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> library has created a local cookie session for you, to persist your authentication.</li>
+              <li>The session contains the information retrieved from the <a href="https://developer.okta.com/docs/api/resources/oidc#get-user-information">User Info Endpoint</a> of the cofigured issuser. This information is automatically persisted for you, and can be read from <code>req.userinfo</code></li>
+              <li>Visit the <a href="/profile">My Profile</a> page in this application to see an example of using this data.</li>
+            </ul>
+            <p></p>
+          {{/isLoggedIn}}
+
+          {{^isLoggedIn}}
+            <form method="get" action="/login">
+              <button id="login-button" class="ui primary button" type="submit">Log In</button>
+            </form>
+          {{/isLoggedIn}}
+        </div>
+      </div>
+      <div class="column seven wide sample-col right floated">
+        <h3>Server Configuration</h3>
+        <p>This server has been configured with the following settings:</p>
+        <table class="ui table compact collapsing">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Issuer</td>
+              <td>{{oidcConfig.issuer}}</td>
+            </tr>
+            <tr>
+              <td>Client ID</td>
+              <td>{{oidcConfig.clientId}}</td>
+            </tr>
+            <tr>
+              <td>Client Secret</td>
+              <td>{{oidcConfig.clientSecret}}</td>
+            </tr>
+            <tr>
+              <td>Redirect Uri</td>
+              <td>{{oidcConfig.redirectUri}}</td>
+            </tr>
+            <tr>
+              <td>Requested Scope</td>
+              <td>{{oidcConfig.scope}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
