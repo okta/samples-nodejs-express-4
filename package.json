@@ -11,12 +11,22 @@
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
     "postinstall": "node post-install.js",
-    "custom-login": "node custom-login/server.js",
-    "okta-hosted-login": "node okta-hosted-login/server.js",
+    "custom-login-server": "node custom-login/server.js",
+    "test:custom-login": "protractor okta-oidc-tck/e2e-tests/custom-login/conf.js",
+    "okta-hosted-login-server": "node okta-hosted-login/server.js",
+    "test:okta-hosted-login": "protractor okta-oidc-tck/e2e-tests/okta-hosted-login/conf.js",
     "resource-server": "node resource-server/server.js",
-    "test": "echo \"Tests not yet implemented\""
+    "test": "npm run test:e2e",
+    "test:e2e": "npm run get-oidc-tck && npm run test:okta-hosted-login && npm run test:custom-login",
+    "get-oidc-tck": "[ ! -d okta-oidc-tck/ ] && git clone https://github.com/okta/okta-oidc-tck.git",
+    "pretest": "webdriver-manager update --gecko false"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "forever-monitor": "1.7.1",
+    "jasmine-reporters": "2.2.0",
+    "protractor": "^5.1.0",
+    "wait-on": "2.0.2"
+  },
   "dependencies": {
     "@okta/jwt-verifier": "0.0.11",
     "@okta/oidc-middleware": "0.0.15",

@@ -9,3 +9,43 @@ Please find the sample that fits your use-case from the table below.
 | [Okta-Hosted Login](/okta-hosted-login) | An application server that uses the hosted login page on your Okta org, then creates a cookie session for the user in the Express application. | Traditional web applications with server-side rendered pages. |
 | [Custom Login Page](/custom-login) | An application server that uses the Okta Sign-In Widget on a custom login page within the application, then creates a cookie session for the user in the Express application. | Traditional web applications with server-side rendered pages. |
 | [Resource Server](/resource-server) | This is a sample API resource server that shows you how to authenticate requests with access tokens that have been issued by Okta. | Single-Page applications. |
+
+## Running E2E Tests locally
+
+E2E Tests will be run against the Custom Login and Okta-Hosted Login servers
+
+Before running the tests locally, install all the dependencies
+```bash
+npm install
+```
+Then you need to setup the following environment variables
+
+```bash
+export CLIENT_ID={yourAppClientId}
+export CLIENT_SECRET={yourAppClientSecret}
+export OKTA_DOMAIN={yourOktaOrgDomain}
+```
+
+**NOTE:** Use only the domain part of your org url while setting OKTA_DOMAIN environment.
+
+* E.g - If your org url is https://myorg.oktapreview.okta.com, your OKTA_DOMAIN should be myorg.oktapreview
+
+After setting up the environment variables, you need to run a script to update the configuration
+
+```bash
+sh scripts/setup-env.sh
+```
+A final step is update the following environment variables with username & password of the user you want to use in your tests
+
+Note that the USERNAME should be of the form "username@email.com"
+
+```bash
+export USERNAME={userName}
+export PASSWORD={password}
+```
+
+Then run the E2E tests:
+
+```bash
+npm test
+```
