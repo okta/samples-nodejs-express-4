@@ -20,7 +20,7 @@ To run this application, you first need to clone this repo and then enter into t
 
 ```bash
 git clone git@github.com:okta/samples-nodejs-express-4.git
-cd samples-nodejs-express-4/
+cd samples-nodejs-express-4/resource-server
 ```
 
 Then install dependencies:
