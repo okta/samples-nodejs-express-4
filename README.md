@@ -33,7 +33,7 @@ export OKTA_DOMAIN={yourOktaOrgDomain}
 After setting up the environment variables, you need to run a script to update the configuration
 
 ```bash
-sh scripts/setup-env.sh
+sh scripts/update-samples-config.sh
 ```
 A final step is update the following environment variables with username & password of the user you want to use in your tests
 

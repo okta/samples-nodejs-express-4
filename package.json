@@ -18,7 +18,7 @@
     "resource-server": "node resource-server/server.js",
     "test": "npm run test:e2e",
     "test:e2e": "npm run get-oidc-tck && npm run test:okta-hosted-login && npm run test:custom-login",
-    "get-oidc-tck": "[ ! -d okta-oidc-tck/ ] && git clone https://github.com/okta/okta-oidc-tck.git",
+    "get-oidc-tck": "[ ! -d okta-oidc-tck/ ] && git clone https://github.com/okta/okta-oidc-tck.git || echo \"TCK already cloned\"",
     "pretest": "webdriver-manager update --gecko false"
   },
   "devDependencies": {
