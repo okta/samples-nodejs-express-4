@@ -52,7 +52,7 @@ Now place these values into the file `.samples.config.json` that was created for
 Now start the app server:
 
 ```
-npm run custom-login
+npm run custom-login-server
 ```
 
 Now navigate to http://localhost:8080 in your browser.

@@ -53,7 +53,7 @@ Now place these values into the file `.samples.config.json` that was created for
 Now start the app server:
 
 ```
-npm run okta-hosted-login
+npm run okta-hosted-login-server
 ```
 
 Now navigate to http://localhost:8080 in your browser.
