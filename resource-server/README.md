@@ -13,6 +13,7 @@ Before running this sample, you will need the following:
 * An Okta Application, configured for Singe-Page App (SPA) mode. This is done from the Okta Developer Console and you can find instructions [here][OIDC SPA Setup Instructions].  When following the wizard, use the default properties.  They are are designed to work with our sample applications.
 * One of our front-end sample applications to demonstrate the interaction with the resource server:
   * [Okta React Sample Apps][]
+  * [Okta Vue Sample Apps][]
 
 ## Running This Example
 
@@ -65,5 +66,6 @@ If you see a basic welcome message, then things are working!  Now open a new ter
 [Implicit Flow]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit
 [Okta Angular Sample Apps]: https://github.com/okta/samples-js-angular
 [Okta React Sample Apps]: https://github.com/okta/samples-js-react
+[Okta Vue Sample Apps]: https://github.com/okta/samples-js-vue
 [Okta JWT Verifier]: https://github.com/okta/okta-oidc-js/tree/master/packages/jwt-verifier
 [OIDC SPA Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit#1-setting-up-your-application
