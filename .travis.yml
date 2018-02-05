@@ -12,4 +12,4 @@ install:
 script: ./scripts/travis.sh
 
 before_install:
-  - "npm install -g npm@5.6.0"
+- "npm install -g npm@5.6.0"
