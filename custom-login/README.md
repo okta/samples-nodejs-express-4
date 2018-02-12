@@ -44,7 +44,7 @@ Now place these values into the file `.samples.config.json` that was created for
       "issuer": "https://{yourOktaDomain}.com/oauth2/default",
       "redirectUri": "http://localhost:8080/authorization-code/callback",
       "scope": "openid profile email"
-    },
+    }
   }
 }
 ```
