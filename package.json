@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/okta/samples-nodejs-express-4",
   "scripts": {
+    "banners": "node tools/maintain-banners.js {common,custom-login,okta-hosted-login,resource-server,tools}/{*.js,**/*.js} ./*.js common/assets/css/samples.css",
     "postinstall": "node post-install.js",
     "custom-login-server": "node custom-login/server.js",
     "test:custom-login": "protractor okta-oidc-tck/e2e-tests/custom-login/conf.js",
