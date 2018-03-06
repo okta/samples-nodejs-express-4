@@ -14,31 +14,30 @@ Please find the sample that fits your use-case from the table below.
 
 E2E Tests will be run against the Custom Login, Okta-Hosted Login & Resource servers
 
-Before running the tests locally, install all the dependencies
+Before running the tests locally, install all the dependencies in the root of this project:
 ```bash
 npm install
 ```
-Then you need to setup the following environment variables
+To test both samples you will need the following configured in your developer org:
+* A web application
+* A SPA application
+* A test user account with a known username and password.  Note that the USERNAME should be of the form "username@email.com"
+
+Once you have those resources setup, export their details as the following environment variables:
 
 ```bash
 export ISSUER=https://{yourOktaDomain}.com/oauth2/default
-export CLIENT_ID={yourAppClientId}
-export CLIENT_SECRET={yourAppClientSecret}
-export SPA_CLIENT_ID={yourSPAClientId}
+export CLIENT_ID={yourWebAppClientId}
+export CLIENT_SECRET={yourWebAppClientSecret}
+export SPA_CLIENT_ID={yourSpaAppClientId}
+export USERNAME={userName}
+export PASSWORD={password}
 ```
 
-After setting up the environment variables, you need to run a script to update the configuration
+After setting up the environment variables, run this script to copy the configuration into the JSON configuration files:
 
 ```bash
 sh scripts/update-samples-config.sh
-```
-A final step is update the following environment variables with username & password of the user you want to use in your tests
-
-Note that the USERNAME should be of the form "username@email.com"
-
-```bash
-export USERNAME={userName}
-export PASSWORD={password}
 ```
 
 Then run the E2E tests:
