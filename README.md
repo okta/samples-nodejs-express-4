@@ -12,7 +12,7 @@ Please find the sample that fits your use-case from the table below.
 
 ## Running E2E Tests locally
 
-E2E Tests will be run against the Custom Login and Okta-Hosted Login servers
+E2E Tests will be run against the Custom Login, Okta-Hosted Login & Resource servers
 
 Before running the tests locally, install all the dependencies
 ```bash
@@ -21,14 +21,11 @@ npm install
 Then you need to setup the following environment variables
 
 ```bash
+export ISSUER=https://{yourOktaDomain}.com/oauth2/default
 export CLIENT_ID={yourAppClientId}
 export CLIENT_SECRET={yourAppClientSecret}
-export OKTA_DOMAIN={yourOktaOrgDomain}
+export SPA_CLIENT_ID={yourSPAClientId}
 ```
-
-**NOTE:** Use only the domain part of your org url while setting OKTA_DOMAIN environment.
-
-* E.g - If your org url is https://myorg.oktapreview.okta.com, your OKTA_DOMAIN should be myorg.oktapreview
 
 After setting up the environment variables, you need to run a script to update the configuration
 
