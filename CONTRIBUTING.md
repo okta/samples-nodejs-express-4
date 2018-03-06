@@ -39,3 +39,39 @@ If you do not see an exact emoji match, use the best matching emoji.
     Updates Contributing.md with new template
 
     Resolves: OKTA-12345
+
+## Running E2E Tests locally
+
+E2E Tests will be run against the Custom Login, Okta-Hosted Login & Resource servers
+
+Before running the tests locally, install all the dependencies in the root of this project:
+```bash
+npm install
+```
+To test both samples you will need the following configured in your developer org:
+* A web application
+* A SPA application
+* A test user account with a known username and password.  Note that the USERNAME should be of the form "username@email.com"
+
+Once you have those resources setup, export their details as the following environment variables:
+
+```bash
+export ISSUER=https://{yourOktaDomain}.com/oauth2/default
+export CLIENT_ID={yourWebAppClientId}
+export CLIENT_SECRET={yourWebAppClientSecret}
+export SPA_CLIENT_ID={yourSpaAppClientId}
+export USERNAME={userName}
+export PASSWORD={password}
+```
+
+After setting up the environment variables, run this script to copy the configuration into the JSON configuration files:
+
+```bash
+sh scripts/update-samples-config.sh
+```
+
+Then run the E2E tests:
+
+```bash
+npm test
+```
