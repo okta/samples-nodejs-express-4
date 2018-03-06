@@ -17,8 +17,9 @@
     "okta-hosted-login-server": "node okta-hosted-login/server.js",
     "test:okta-hosted-login": "protractor okta-oidc-tck/e2e-tests/okta-hosted-login/conf.js",
     "resource-server": "node resource-server/server.js",
+    "test:resource-server": "jasmine okta-oidc-tck/resource-server/specs/okta-resource-server-spec.js",
     "test": "npm run test:e2e",
-    "test:e2e": "npm run get-oidc-tck && npm run test:okta-hosted-login && npm run test:custom-login",
+    "test:e2e": "npm run get-oidc-tck && npm run test:okta-hosted-login && npm run test:resource-server",
     "get-oidc-tck": "[ ! -d okta-oidc-tck/ ] && git clone https://github.com/okta/okta-oidc-tck.git || echo \"TCK already cloned\"",
     "pretest": "webdriver-manager update --gecko false"
   },
