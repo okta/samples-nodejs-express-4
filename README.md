@@ -25,6 +25,7 @@ export CLIENT_ID={yourAppClientId}
 export CLIENT_SECRET={yourAppClientSecret}
 export OKTA_DOMAIN={yourOktaOrgDomain}
 export SPA_CLIENT_ID={yourSPAClientId}
+export ISSUER=https://$OKTA_DOMAIN.com/oauth2/default
 ```
 
 **NOTE:** Use only the domain part of your org url while setting OKTA_DOMAIN environment.
