@@ -5,9 +5,9 @@ const { exec } = require('child_process');
 const path = require('path');
 
 function updateConfig() {
-  if (process.env.ISSUER === undefined || process.env.CLIENT_ID === undefined) {
-    console.log('[ERROR] Please set the ISSUER and CLIENT_ID Environment variables');
-    return;
+  if (!process.env.ISSUER || !process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.USERNAME || !process.env.PASSWORD) {
+    console.log('[ERROR] Please set the necessary Environment variables (ISSUER, CLIENT_ID, CLIENT_SECRET, USERNAME, PASSWORD)');
+    process.exit(1);
   }
 
   const file = path.join(__dirname, '..', '.samples.config.json');

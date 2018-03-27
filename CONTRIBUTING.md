@@ -48,7 +48,7 @@ Before running the tests locally, install all the dependencies in the root of th
 ```bash
 npm install
 ```
-To test both samples you will need the following configured in your developer org:
+To test the samples you will need the following configured in your developer org:
 * [A Web application](/okta-hosted-login#prerequisites)
 * [A SPA application](https://github.com/okta/samples-js-angular/tree/master/okta-hosted-login#prerequisites)
 * A test user account with a known username and password.  Note that the USERNAME should be of the form "username@email.com"
