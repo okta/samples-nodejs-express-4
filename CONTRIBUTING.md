@@ -48,9 +48,9 @@ Before running the tests locally, install all the dependencies in the root of th
 ```bash
 npm install
 ```
-To test both samples you will need the following configured in your developer org:
-* A web application
-* A SPA application
+To test the samples you will need the following configured in your developer org:
+* [A Web application](/okta-hosted-login#prerequisites)
+* [A SPA application](https://github.com/okta/samples-js-angular/tree/master/okta-hosted-login#prerequisites)
 * A test user account with a known username and password.  Note that the USERNAME should be of the form "username@email.com"
 
 Once you have those resources setup, export their details as the following environment variables:
@@ -64,14 +64,26 @@ export USERNAME={userName}
 export PASSWORD={password}
 ```
 
-After setting up the environment variables, run this script to copy the configuration into the JSON configuration files:
+For Windows, please set the following environment variables:
+- `ISSUER`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
+- `SPA_CLIENT_ID`
+- `USER_NAME`
+- `PASSWORD`
 
-```bash
-sh scripts/update-samples-config.sh
-```
+> **NOTE:** Windows has `USERNAME` as a built-in system variable, hence set the `USER_NAME` environment variable for testing.
 
 Then run the E2E tests:
 
 ```bash
 npm test
 ```
+
+> **NOTE:** If you want to execute individual tests such as `npm run test:okta-hosted-login`, you will need to update the environment by running the following node script:
+
+```bash
+node scripts/setup-env.js
+```
+
+> **NOTE:** If you want to test a different org or client app, you need to delete the configuration file `.samples.config.json`, and start from [first step](#running-e2e-tests-locally)
