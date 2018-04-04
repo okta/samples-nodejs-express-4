@@ -4,6 +4,9 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const path = require('path');
 
+// Users can also provide the testenv configuration at the root folder
+require('dotenv').config({ path: path.join(__dirname, '..', 'testenv') });
+
 function updateConfig() {
   if (!process.env.ISSUER || !process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.USERNAME || !process.env.PASSWORD) {
     console.log('[ERROR] Please set the necessary Environment variables (ISSUER, CLIENT_ID, CLIENT_SECRET, USERNAME, PASSWORD)');
