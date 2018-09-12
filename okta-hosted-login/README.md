@@ -37,12 +37,12 @@ Now place these values into the file `.samples.config.json` that was created for
 ```json
 {
   "webServer": {
-    "port": 8080,
+    "port": 8443,
     "oidc": {
       "clientId": "{clientId}",
       "clientSecret": "{clientSecret}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default",
-      "redirectUri": "http://localhost:8080/authorization-code/callback",
+      "redirectUri": "https://localhost:8443/authorization-code/callback",
       "scope": "openid profile email"
     },
   }
@@ -56,7 +56,7 @@ Now start the app server:
 npm run okta-hosted-login-server
 ```
 
-Now navigate to http://localhost:8080 in your browser.
+Now navigate to https://localhost:8443 in your browser.
 
 If you see a home page that prompts you to login, then things are working!  Clicking the **Log in** button will redirect you to the Okta hosted sign-in page.
 

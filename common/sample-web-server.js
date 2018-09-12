@@ -17,6 +17,8 @@
  */
 
 const express = require('express');
+const fs = require('fs');
+const https = require('https');
 const session = require('express-session');
 const mustacheExpress = require('mustache-express');
 const path = require('path');
@@ -86,7 +88,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
   oidc.on('ready', () => {
-    app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
+    // HTTP
+    // app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
+    
+    // HTTPS
+    https.createServer({
+      key: fs.readFileSync('server.key'),
+      cert: fs.readFileSync('server.cert')
+    }, app).listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
   });
 
   oidc.on('error', err => {
