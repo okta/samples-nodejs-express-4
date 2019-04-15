@@ -21,7 +21,7 @@ Before running this sample, you will need the following:
 To run this application, you first need to clone this repo and then enter into this directory:
 
 ```bash
-git clone git@github.com:okta/samples-nodejs-express-4.git
+git clone https://github.com/okta/samples-nodejs-express-4.git
 cd samples-nodejs-express-4/
 ```
 
