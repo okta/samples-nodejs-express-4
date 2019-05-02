@@ -30,12 +30,12 @@
     "jasmine": "^3.0.0",
     "jasmine-reporters": "2.2.0",
     "platform": "^1.3.5",
-    "protractor": "^5.1.0",
-    "wait-on": "2.0.2"
+    "protractor": "^5.4.2",
+    "wait-on": "^3.2.0"
   },
   "dependencies": {
-    "@okta/jwt-verifier": "0.0.11",
-    "@okta/oidc-middleware": "0.0.15",
+    "@okta/jwt-verifier": "0.0.14",
+    "@okta/oidc-middleware": "^2.0.0",
     "colors": "^1.1.2",
     "cors": "^2.8.4",
     "express": "^4.14.0",

@@ -17,6 +17,7 @@ var cors = require('cors');
 const sampleConfig = require('../.samples.config.json');
 
 const oktaJwtVerifier = new OktaJwtVerifier({
+  clientId: sampleConfig.resourceServer.oidc.clientId,
   issuer: sampleConfig.resourceServer.oidc.issuer,
   assertClaims: sampleConfig.resourceServer.assertClaims
 });

@@ -27,7 +27,7 @@
             <p>You have successfully authenticated against your Okta org, and have been redirected back to this application.  Here are some cool things to know:</p>
             <ul>
               <li>The <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/oidc-middleware">Okta OIDC Middleware Library</a> library has created a local cookie session for you, to persist your authentication.</li>
-              <li>The session contains the information retrieved from the <a href="https://developer.okta.com/docs/api/resources/oidc#get-user-information">User Info Endpoint</a> of the cofigured issuser. This information is automatically persisted for you, and can be read from <code>req.userinfo</code></li>
+              <li>The session contains the information retrieved from the <a href="https://developer.okta.com/docs/api/resources/oidc#get-user-information">User Info Endpoint</a> of the cofigured issuser. This information is automatically persisted for you, and can be read from <code>req.userContext.userinfo</code></li>
               <li>Visit the <a href="/profile">My Profile</a> page in this application to see an example of using this data.</li>
             </ul>
             <p></p>
@@ -40,40 +40,7 @@
           {{/isLoggedIn}}
         </div>
       </div>
-      <div class="column seven wide sample-col right floated">
-        <h3>Server Configuration</h3>
-        <p>This server has been configured with the following settings:</p>
-        <table class="ui table compact collapsing">
-          <thead>
-            <tr>
-              <th>Setting</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Issuer</td>
-              <td>{{oidcConfig.issuer}}</td>
-            </tr>
-            <tr>
-              <td>Client ID</td>
-              <td>{{oidcConfig.clientId}}</td>
-            </tr>
-            <tr>
-              <td>Client Secret</td>
-              <td>{{oidcConfig.clientSecret}}</td>
-            </tr>
-            <tr>
-              <td>Redirect Uri</td>
-              <td>{{oidcConfig.redirectUri}}</td>
-            </tr>
-            <tr>
-              <td>Requested Scope</td>
-              <td>{{oidcConfig.scope}}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {{>server-config}}
     </div>
   </body>
 </html>

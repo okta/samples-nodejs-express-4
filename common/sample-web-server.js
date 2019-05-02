@@ -31,7 +31,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     issuer: sampleConfig.oidc.issuer,
     client_id: sampleConfig.oidc.clientId,
     client_secret: sampleConfig.oidc.clientSecret,
-    redirect_uri: sampleConfig.oidc.redirectUri,
+    appBaseUrl: sampleConfig.oidc.appBaseUrl,
     scope: sampleConfig.oidc.scope
   }, extraOidcOptions || {}));
 
@@ -64,25 +64,22 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   app.get('/', (req, res) => {
     const template = homePageTemplateName || 'home';
+    const userinfo = req.userContext && req.userContext.userinfo;
     res.render(template, {
-      isLoggedIn: !!req.userinfo,
-      userinfo: req.userinfo
+      isLoggedIn: !!userinfo,
+      userinfo: userinfo
     });
   });
 
   app.get('/profile', oidc.ensureAuthenticated(), (req, res) => {
     // Convert the userinfo object into an attribute array, for rendering with mustache
-    const attributes = Object.entries(req.userinfo);
+    const userinfo = req.userContext && req.userContext.userinfo;
+    const attributes = Object.entries(userinfo);
     res.render('profile', {
-      isLoggedIn: !!req.userinfo,
-      userinfo: req.userinfo,
+      isLoggedIn: !!userinfo,
+      userinfo: userinfo,
       attributes
     });
-  });
-
-  app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
   });
 
   oidc.on('ready', () => {
@@ -90,7 +87,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
   oidc.on('error', err => {
-    // An error occurred while setting up OIDC
+    // An error occurred with OIDC
     throw err;
   });
 };

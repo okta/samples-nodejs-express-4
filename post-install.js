@@ -19,13 +19,14 @@ const sampleConfig = {
       clientId: '{clientId}',
       clientSecret: '{clientSecret}',
       issuer: 'https://{yourOktaDomain}.com/oauth2/default',
-      redirectUri: 'http://localhost:8080/authorization-code/callback',
+      appBaseUrl: 'http://localhost:8080',
       scope: 'openid profile email'
     },
   },
   resourceServer: {
     port: 8000,
     oidc: {
+      clientId: '{clientId}',
       issuer: 'https://{yourOktaDomain}.com/oauth2/default'
     },
     assertClaims: {

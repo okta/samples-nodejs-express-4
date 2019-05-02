@@ -6,9 +6,11 @@
         <a id="profile-button" data-se="profile" class="item" href="/profile">
           My Profile
         </a>
-        <a id="logout-button" data-se="logout" class="item" href="/logout">
-          Logout
-        </a>
+        <form method="POST" action="/logout">
+          <button id="logout-button" data-se="logout" class="item">
+            Logout
+          </button>
+        </form>
       {{/isLoggedIn}}
     </div>
   </div>
