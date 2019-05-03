@@ -9,6 +9,7 @@ Before running this sample, you will need the following:
 
 * An Okta Developer Account, you can sign up for one at https://developer.okta.com/signup/.
 * An Okta Application, configured for Web mode. This is done from the Okta Developer Console and you can find instructions [here][OIDC Web Application Setup Instructions].  When following the wizard, use the default properties.  They are designed to work with our sample applications.
+* Your Okta Application entry needs the logout callback.  "Logout redirect URIs" under "General" for the application should list `http://localhost:8080/logout/callback`.  If it is not present, click "Edit" and add it.
 
 
 ## Running This Example
@@ -30,7 +31,7 @@ Now you need to gather the following information from the Okta Developer Console
 
 - **Client ID** and **Client Secret** - This can be found on the "General" tab of an application, you want to get this for the Web application that you created earlier.
 
-- **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.oktapreview.com/oauth2/default`.
+- **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.okta.com/oauth2/default`.
 
 Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
 
@@ -42,7 +43,7 @@ Now place these values into the file `.samples.config.json` that was created for
       "clientId": "{clientId}",
       "clientSecret": "{clientSecret}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default",
-      "redirectUri": "http://localhost:8080/authorization-code/callback",
+      "appBaseUrl": "http://localhost:8080",
       "scope": "openid profile email"
     }
   }

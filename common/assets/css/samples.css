@@ -24,6 +24,16 @@ a:link, a:visited, a:active {
   font-size: 15px;
 }
 
+/* Menu ***********************************************************************/
+
+.menu button {
+  cursor: pointer;
+  border: none;
+}
+
+.menu button:hover {
+  color: #fff !important;
+}
 /* Getting Started ************************************************************/
 
 #getting-started {
