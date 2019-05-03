@@ -43,6 +43,7 @@ Now place these values into the file `.samples.config.json` that was created for
   "resourceServer": {
     "port": 8000,
     "oidc": {
+      "clientId": "{clientId}",
       "issuer": "https://{yourOktaDomain}.com/oauth2/default"
     },
     "assertClaims": {
