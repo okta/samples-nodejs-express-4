@@ -26,12 +26,12 @@ const sampleConfig = {
   resourceServer: {
     port: 8000,
     oidc: {
-      clientId: '{clientId}',
+      clientId: '{spaClientId}',
       issuer: 'https://{yourOktaDomain}.com/oauth2/default'
     },
     assertClaims: {
       aud: 'api://default',
-      cid: '{clientId}'
+      cid: '{spaClientId}'
     }
   }
 };
