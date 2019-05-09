@@ -15,7 +15,7 @@ function updateConfig() {
 
   const file = path.join(__dirname, '..', '.samples.config.json');
   const data = fs.readFileSync(file, 'utf8');
-  let result = data.replace(/"cid": "{clientId}"/g, `"cid": "${process.env.SPA_CLIENT_ID}"`)
+  let result = data.replace(/"cid": "{spaClientId}"/g, `"cid": "${process.env.SPA_CLIENT_ID}"`)
   result = result.replace(/{clientId}/g, process.env.CLIENT_ID);
   result = result.replace(/{clientSecret}/g, process.env.CLIENT_SECRET);
   result = result.replace(/https:\/\/{yourOktaDomain}.com\/oauth2\/default/g, process.env.ISSUER);
