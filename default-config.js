@@ -1,4 +1,4 @@
-export default {
+module.exports = {
     webServer: {
       port: 8080,
       oidc: {

@@ -33,10 +33,10 @@ Now you need to gather the following information from the Okta Developer Console
 
 - **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.okta.com/oauth2/default`.
 
-Now place these values into the file `.samples.config.json` that was created for you in the root of this project:
+Now place these values into the file `.samples.config.js` that was created for you in the root of this project:
 
-```json
-{
+```javascript
+module.exports = {
   "webServer": {
     "port": 8080,
     "oidc": {

@@ -32,7 +32,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     client_id: sampleConfig.oidc.clientId,
     client_secret: sampleConfig.oidc.clientSecret,
     appBaseUrl: sampleConfig.oidc.appBaseUrl,
-    scope: sampleConfig.oidc.scope
+    scope: sampleConfig.oidc.scope,
+    testing: sampleConfig.oidc.testing
   }, extraOidcOptions || {}));
 
   const app = express();

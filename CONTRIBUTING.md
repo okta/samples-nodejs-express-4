@@ -99,4 +99,4 @@ npm test
 node scripts/setup-env.js
 ```
 
-> **NOTE:** If you want to test a different org or client app, you need to delete the configuration file `.samples.config.json`, and start from [first step](#running-e2e-tests-locally)
+> **NOTE:** If you want to test a different org or client app, you need to delete the configuration file `.samples.config.js`, and start from [first step](#running-e2e-tests-locally)

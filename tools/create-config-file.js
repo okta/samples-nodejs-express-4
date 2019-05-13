@@ -22,9 +22,9 @@ const fs = require('fs');
 const colorsPath = path.join(process.cwd(), 'node_modules', 'colors');
 const colors = require(colorsPath);
 
-const defaultFilePath = path.join(process.cwd(), 'default-config.ts');
+const defaultFilePath = path.join(process.cwd(), 'default-config.js');
 const defaultFile = fs.readFileSync(defaultFilePath);
-const newFilePath = path.join(process.cwd(), '.samples.config.json');
+const newFilePath = path.join(process.cwd(), '.samples.config.js');
 
 /* eslint-disable no-console */
 
