@@ -16,16 +16,22 @@
 
 // This creates a boilerplate config file for you
 
-const colors = require('colors');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
-const file = path.join(process.cwd(), '.samples.config.json');
+const colorsPath = path.join(process.cwd(), 'node_modules', 'colors');
+const colors = require(colorsPath);
 
-module.exports = function createConfigFile(sampleConfig) {
-  if (!fs.existsSync(file)) {
-    console.log('Creating default configuration file');
-    fs.writeFileSync(file, JSON.stringify(sampleConfig, '\n', 2) + '\n');
+const defaultFilePath = path.join(process.cwd(), 'default-config.js');
+const defaultFile = fs.readFileSync(defaultFilePath);
+const newFilePath = path.join(process.cwd(), '.samples.config.js');
+
+/* eslint-disable no-console */
+
+module.exports = function createConfigFile() {
+  if (!fs.existsSync(newFilePath)) {
+    console.log('Creating default configuration file..');
+    fs.writeFileSync(newFilePath, defaultFile);
   }
-  console.log(colors.green(`\nSample project is ready to go!  Please add your configuration to ${file}, see the README for instructions.\n`));
+  console.log(colors.green(`\nSample project is ready to go!  Please add your configuration to ${newFilePath}, see the README for instructions.\n`));
 };

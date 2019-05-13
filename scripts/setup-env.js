@@ -13,12 +13,27 @@ function updateConfig() {
     process.exit(1);
   }
 
-  const file = path.join(__dirname, '..', '.samples.config.json');
+  const file = path.join(__dirname, '..', '.samples.config.js');
   const data = fs.readFileSync(file, 'utf8');
-  let result = data.replace(/"cid": "{spaClientId}"/g, `"cid": "${process.env.SPA_CLIENT_ID}"`)
-  result = result.replace(/{clientId}/g, process.env.CLIENT_ID);
-  result = result.replace(/{clientSecret}/g, process.env.CLIENT_SECRET);
-  result = result.replace(/https:\/\/{yourOktaDomain}.com\/oauth2\/default/g, process.env.ISSUER);
+  let result = data.replace(/https:\/\/{yourOktaDomain}.com\/oauth2\/default/g, process.env.ISSUER);
+
+  if(data.indexOf('{clientId}') >= 0){
+    result = result.replace(/{clientId}/g, process.env.CLIENT_ID);
+  }
+
+  if(data.indexOf('{clientSecret}') >= 0){
+    result = result.replace(/{clientSecret}/g, process.env.CLIENT_SECRET);
+  }
+
+  if(data.indexOf('{spaClientId}') >= 0){
+    result = result.replace(/{spaClientId}/g, process.env.SPA_CLIENT_ID);
+  }
+
+  // Only used for testing to support non-https orgs
+  if (process.env.OKTA_TESTING_DISABLEHTTPSCHECK) {
+    result = result.replace(/disableHttpsCheck: false/g, 'disableHttpsCheck: true');
+  }
+
   fs.writeFileSync(file, result, 'utf8');
 }
 

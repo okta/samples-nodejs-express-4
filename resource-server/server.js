@@ -14,12 +14,13 @@ const express = require('express');
 const OktaJwtVerifier = require('@okta/jwt-verifier');
 var cors = require('cors');
 
-const sampleConfig = require('../.samples.config.json');
+const sampleConfig = require('../.samples.config.js');
 
 const oktaJwtVerifier = new OktaJwtVerifier({
   clientId: sampleConfig.resourceServer.oidc.clientId,
   issuer: sampleConfig.resourceServer.oidc.issuer,
-  assertClaims: sampleConfig.resourceServer.assertClaims
+  assertClaims: sampleConfig.resourceServer.assertClaims,
+  testing: sampleConfig.resourceServer.oidc.testing
 });
 
 /**
