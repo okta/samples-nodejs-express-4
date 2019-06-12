@@ -33,7 +33,7 @@ Now you need to gather the following information from the Okta Developer Console
 
 - **Issuer** - This is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.okta.com/oauth2/default`.
 
-Now place these values into a file `testenv` at the root of this project (this is the parent directory relative to this README):
+These values must exist as environment variables. They can be exported in the shell, or saved in a file named `testenv`, at the root of this repository. (This is the parent directory, relative to this README) See [dotenv](https://www.npmjs.com/package/dotenv) for more details on this file format.
 
 ```ini
 ISSUER=https://yourOktaDomain.com/oauth2/default
@@ -41,7 +41,7 @@ CLIENT_ID=123xxxxx123
 CLIENT_SECRET=1234XXX
 ```
 
-Now start the app server:
+With variables set, start the app server:
 
 ```
 npm run custom-login-server
