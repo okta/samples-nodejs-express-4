@@ -14,7 +14,7 @@ const express = require('express');
 const OktaJwtVerifier = require('@okta/jwt-verifier');
 var cors = require('cors');
 
-const sampleConfig = require('../.samples.config.js');
+const sampleConfig = require('../config.js');
 
 const oktaJwtVerifier = new OktaJwtVerifier({
   clientId: sampleConfig.resourceServer.oidc.clientId,

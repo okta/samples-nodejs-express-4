@@ -4,6 +4,6 @@ dist
 npm-debug.log
 .DS_Store
 .vscode
-.samples.config.js
+.samples.config.js*
 testenv
 okta-oidc-tck

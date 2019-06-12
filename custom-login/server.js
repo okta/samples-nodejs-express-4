@@ -11,7 +11,7 @@
  */
 
 const url = require('url');
-const sampleConfig = require('../.samples.config.js');
+const sampleConfig = require('../config.js');
 const SampleWebServer = require('../common/sample-web-server');
 
 const oidcMiddlewareConfig = {
