@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-const sampleConfig = require('../.samples.config.js');
+const sampleConfig = require('../config.js');
 const SampleWebServer = require('../common/sample-web-server');
 
 /**

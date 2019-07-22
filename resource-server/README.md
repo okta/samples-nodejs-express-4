@@ -36,26 +36,14 @@ Now you need to gather the following information from the Okta Developer Console
 - **Client Id** - The client ID of the SPA application that you created earlier. This can be found on the "General" tab of an application, or the list of applications.  The resource server will validate that tokens have been minted for this application.
 - **Issuer** - This is the URL of the authorization server that minted the tokens.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-1234.oktapreview.com/oauth2/default`.
 
-Now place these values into the file `.samples.config.js` that was created for you in the root of this project:
+These values must exist as environment variables. They can be exported in the shell, or saved in a file named `testenv`, at the root of this repository. (This is the parent directory, relative to this README) See [dotenv](https://www.npmjs.com/package/dotenv) for more details on this file format.
 
-```javascript
-module.exports = {
-  "resourceServer": {
-    "port": 8000,
-    "oidc": {
-      "clientId": "{spaClientId}",
-      "issuer": "https://{yourOktaDomain}.com/oauth2/default"
-    },
-    "assertClaims": {
-      "aud": "api://default",
-      "cid": "{spaClientId}"
-    }
-  }
-}
-
+```ini
+ISSUER=https://yourOktaDomain.com/oauth2/default
+SPA_CLIENT_ID=123xxxxx123
 ```
 
-Now start the resource server:
+With variables set, start the resource server:
 
 ```
 npm run resource-server
