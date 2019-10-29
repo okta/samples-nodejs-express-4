@@ -84,11 +84,16 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
   oidc.on('ready', () => {
+    // eslint-disable-next-line no-console
     app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
   });
 
   oidc.on('error', err => {
     // An error occurred with OIDC
-    throw err;
+    // eslint-disable-next-line no-console
+    console.error('OIDC ERROR: ', err);
+
+    // Throwing an error will terminate the server process
+    // throw err;
   });
 };
