@@ -38,8 +38,8 @@ function authenticationRequired(req, res, next) {
   }
 
   const accessToken = match[1];
-
-  return oktaJwtVerifier.verifyAccessToken(accessToken)
+  const audience = sampleConfig.resourceServer.assertClaims.aud;
+  return oktaJwtVerifier.verifyAccessToken(accessToken, audience)
     .then((jwt) => {
       req.jwt = jwt;
       next();

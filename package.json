@@ -33,8 +33,8 @@
     "wait-on": "^3.2.0"
   },
   "dependencies": {
-    "@okta/jwt-verifier": "0.0.14",
-    "@okta/oidc-middleware": "^2.0.0",
+    "@okta/jwt-verifier": "1.0.0",
+    "@okta/oidc-middleware": "^2.1.0",
     "colors": "^1.1.2",
     "cors": "^2.8.4",
     "express": "^4.14.0",
