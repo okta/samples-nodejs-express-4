@@ -35,7 +35,7 @@ You will need two Okta applications, one Web app and one SPA app. Save the clien
 
 The Web app needs a couple of settings in the Developer console:
 Add a `Login redirect URI`: `http://localhost:8080/authorization-code/callback`
-Add a `Logout redirect URI`: `http://localhost:8080/logout/callback`
+Add a `Logout redirect URI`: `http://localhost:8080`
 
 You will also need credentials for a test user.
 
