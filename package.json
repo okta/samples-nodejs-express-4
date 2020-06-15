@@ -19,10 +19,11 @@
     "test:resource-server": "jasmine okta-oidc-tck/resource-server/specs/okta-resource-server-spec.js",
     "test": "npm run test:e2e",
     "test:e2e": "npm run test:okta-hosted-login && npm run test:custom-login && npm run test:resource-server",
-    "pretest": "./scripts/update-se-drivers.sh && node scripts/setup-env.js",
+    "pretest": "node ./scripts/update-se-drivers.js && node scripts/setup-env.js",
     "webdriver-update-2.45": "webdriver-manager update --versions.standalone=3.141.59 --versions.chrome 2.45 --gecko false && node scripts/setup-env.js"
   },
   "devDependencies": {
+    "axios": "^0.19.0",
     "dotenv": "^5.0.1",
     "find-process": "^1.1.0",
     "forever-monitor": "1.7.1",
