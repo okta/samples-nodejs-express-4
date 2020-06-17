@@ -1,7 +1,7 @@
 /* eslint-disable consistent-return, no-console */
 
 const fs = require('fs');
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 
 // Users can also provide the testenv configuration at the root folder
@@ -17,18 +17,14 @@ function validateConfig() {
 function cloneRepository(repository, directory) {
   const dir = path.join(__dirname, '..', directory);
   if (fs.existsSync(dir)) {
-    console.log(`${directory} is already cloned.`);
+    console.log(`${directory} is already cloned. Getting latest version...`);
+    execSync(`cd ${directory} && git pull`)
     return;
   }
 
   const command = `git clone ${repository}`;
   console.log(`Cloning repository ${directory}`);
-  exec(command, (err, stdout) => {
-    if (err !== null) {
-      return console.error(err);
-    }
-    return console.log(stdout);
-  });
+  execSync(command);
 }
 
 validateConfig();
