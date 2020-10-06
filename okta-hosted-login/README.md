@@ -38,6 +38,7 @@ These values must exist as environment variables. They can be exported in the sh
 ```ini
 ISSUER=https://yourOktaDomain.com/oauth2/default
 CLIENT_ID=123xxxxx123
+CLIENT_SECRET=456XX
 ```
 
 
