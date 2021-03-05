@@ -10,4 +10,4 @@ install:
 - npm install
 
 script:
-- npm test
+- echo "Tests not run on travis"
