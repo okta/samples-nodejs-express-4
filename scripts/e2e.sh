@@ -4,7 +4,7 @@ source ${OKTA_HOME}/${REPO}/scripts/setup.sh
 
 setup_service xvfb start
 setup_service java 1.8.222
-setup_service google-chrome-stable 85.0.4183.102-1
+setup_service google-chrome-stable 89.0.4389.72-1
 
 yum -y install lsof
 
@@ -15,10 +15,10 @@ export TEST_SUITE_TYPE="junit"
 export TEST_RESULT_FILE_DIR="${REPO}/build2/reports/junit"
 
 export ISSUER=https://samples-javascript.okta.com/oauth2/default
-export CLIENT_ID=0oapmx9r5dK1dDAd54x6
-get_secret prod/okta-sdk-vars/client_secret CLIENT_SECRET
+export CLIENT_ID=0oa4k46ie0Un7R3z34x7
+get_vault_secret_key devex/samples-javascript web_client_secret CLIENT_SECRET
 export USERNAME=george@acme.com
-get_secret prod/okta-sdk-vars/password PASSWORD
+get_vault_secret_key devex/samples-javascript password PASSWORD
 
 cd ${OKTA_HOME}/${REPO}
 
