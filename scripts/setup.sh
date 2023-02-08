@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 # Install required node version
-export NVM_DIR="/root/.nvm"
+export REGISTRY="https://artifacts.aue1d.saasure.com/artifactory/npm-topic"
 setup_service node v14.18.0
 
 # Revert the cache-min setting, since the internal cache does not apply to
