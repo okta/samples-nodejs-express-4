@@ -2,7 +2,7 @@
 
 # Install required node version
 export NVM_DIR="/root/.nvm"
-setup_service node v12.13.0
+setup_service node v14.18.0
 
 # Revert the cache-min setting, since the internal cache does not apply to
 # these repos (and causes problems in lookups)
