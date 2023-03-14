@@ -14,7 +14,7 @@ function validateConfig() {
   }
 }
 
-function cloneRepository(repository, directory, branch) {
+function cloneRepository(repository, directory, branch='master') {
   const dir = path.join(__dirname, '..', directory);
   if (fs.existsSync(dir)) {
     console.log(`${directory} is already cloned. Getting latest version...`);
@@ -22,10 +22,7 @@ function cloneRepository(repository, directory, branch) {
     return;
   }
 
-  let command = `git clone ${repository}`;
-  if (branch) {
-    command = `git clone --single-branch --branch ${branch} ${repository}`;
-  }
+  const command = `git clone --single-branch --branch ${branch} ${repository}`;
   console.log(`Cloning repository ${directory}`);
   execSync(command);
 }
@@ -36,5 +33,5 @@ function installDependencies(directory) {
 }
 
 validateConfig();
-cloneRepository('https://github.com/okta/okta-oidc-tck.git', 'okta-oidc-tck', 'master');
+cloneRepository('https://github.com/okta/okta-oidc-tck.git', 'okta-oidc-tck', 'jp-e2e-deps');
 installDependencies('okta-oidc-tck/e2e-tests');
