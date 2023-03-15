@@ -25,7 +25,6 @@ cd ${OKTA_HOME}/${REPO}
 function run_tests() {
   # npm run pretest
   create_log_group "Pretest"
-  export TEST_TYPE=implicit
   npm i -D protractor
   node ./scripts/update-se-drivers.js
   node ./scripts/setup-env.js
