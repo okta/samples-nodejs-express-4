@@ -28,12 +28,12 @@ function run_tests() {
   export TEST_TYPE=implicit
   npm i -D protractor
   node ./scripts/update-se-drivers.js
-  node scripts/setup-env.js
+  node ./scripts/setup-env.js
   finish_log_group $?
 
   create_log_group "Okta Hosted E2E"
   # npm run test:okta-hosted-login
-  ./node_modules/.bin/protractor protractor.conf.js --sample=okta-hosted-login
+  ./node_modules/.bin/protractor okta-oidc-tck/e2e-tests/okta-hosted-login/conf.js
   finish_log_group $?
 
   kill -s TERM $(lsof -t -i:8080 -sTCP:LISTEN)
@@ -41,7 +41,7 @@ function run_tests() {
 
   create_log_group "Custom Login E2E"
   # npm run test:custom-login
-  ./node_modules/.bin/protractor protractor.conf.js --sample=custom-login
+  ./node_modules/.bin/protractor okta-oidc-tck/e2e-tests/custom-login/conf.js
   finish_log_group $?
 }
 
