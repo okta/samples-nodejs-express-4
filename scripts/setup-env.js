@@ -33,5 +33,5 @@ function installDependencies(directory) {
 }
 
 validateConfig();
-cloneRepository('https://github.com/okta/okta-oidc-tck.git', 'okta-oidc-tck', 'jp-e2e-deps');
+cloneRepository('https://github.com/okta/okta-oidc-tck.git', 'okta-oidc-tck', 'master');
 installDependencies('okta-oidc-tck/e2e-tests');
