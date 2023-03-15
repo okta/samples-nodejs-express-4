@@ -28,7 +28,7 @@ function run_tests() {
   export TEST_TYPE=implicit
   npm i -D protractor
   node ./scripts/update-se-drivers.js
-  npm run setup-env
+  node scripts/setup-env.js
   finish_log_group $?
 
   create_log_group "Okta Hosted E2E"
