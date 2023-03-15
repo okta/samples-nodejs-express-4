@@ -23,11 +23,25 @@ get_vault_secret_key devex/samples-javascript password PASSWORD
 cd ${OKTA_HOME}/${REPO}
 
 function run_tests() {
-  npm run pretest
-  npm run test:okta-hosted-login
+  # npm run pretest
+  create_log_group "Pretest"
+  npm i -D protractor
+  node ./scripts/update-se-drivers.js
+  node ./scripts/setup-env.js
+  finish_log_group $?
+
+  create_log_group "Okta Hosted E2E"
+  # npm run test:okta-hosted-login
+  ./node_modules/.bin/protractor okta-oidc-tck/e2e-tests/okta-hosted-login/conf.js
+  finish_log_group $?
+
   kill -s TERM $(lsof -t -i:8080 -sTCP:LISTEN)
   kill -s TERM $(lsof -t -i:8000 -sTCP:LISTEN)
-  npm run test:custom-login
+
+  create_log_group "Custom Login E2E"
+  # npm run test:custom-login
+  ./node_modules/.bin/protractor okta-oidc-tck/e2e-tests/custom-login/conf.js
+  finish_log_group $?
 }
 
 if ! run_tests; then
