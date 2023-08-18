@@ -22,7 +22,6 @@ const oidcMiddlewareConfig = {
         // Render your custom login page, you must create this view for your application and use the Okta Sign-In Widget
         res.render('custom-login', {
           csrfToken: req.csrfToken(),
-          clientId: sampleConfig.webServer.oidc.clientId,
           baseUrl: baseUrl
         });
       }
