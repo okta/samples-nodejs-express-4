@@ -26,7 +26,7 @@
     "node": ">=14"
   },
   "devDependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "find-process": "^1.4.3",
     "jasmine": "^4.5.0",
     "jasmine-reporters": "^2.5.2",
