@@ -16,9 +16,9 @@ export TEST_RESULT_FILE_DIR="${REPO}/build2/reports/junit"
 
 export ISSUER=https://samples-javascript.okta.com/oauth2/default
 export CLIENT_ID=0oa4k46ie0Un7R3z34x7
-get_vault_secret_key devex/samples-javascript web_client_secret CLIENT_SECRET
+get_terminus_secret "/" web_client_secret CLIENT_SECRET
 export USERNAME=george@acme.com
-get_vault_secret_key devex/samples-javascript password PASSWORD
+get_terminus_secret "/" PASSWORD PASSWORD
 
 cd ${OKTA_HOME}/${REPO}
 
