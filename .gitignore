@@ -7,3 +7,5 @@ npm-debug.log
 .samples.config.js*
 testenv
 okta-oidc-tck
+# matches pattern of other samples
+package-lock.json
