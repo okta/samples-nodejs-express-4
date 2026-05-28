@@ -5,6 +5,7 @@ test_suites:
       timeout: '10'
       script_name: e2e
       criteria: MERGE
+<<<<<<< Updated upstream
       queue_name: small
     - name: semgrep
       script_path: /root/okta/samples-nodejs-express-4/scripts
@@ -13,3 +14,14 @@ test_suites:
       script_name: semgrep
       criteria: MERGE
       queue_name: small
+=======
+      queue_name: al2023
+    - name: snyk
+      script_path: /root/okta/samples-nodejs-express-4/scripts
+      script_name: snyk
+      sort_order: '2'
+      timeout: '200'
+      criteria: MAINLINE
+      queue_name: al2023
+      trigger: AUTO
+>>>>>>> Stashed changes
