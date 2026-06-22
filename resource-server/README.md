@@ -57,5 +57,5 @@ If you see a basic welcome message, then things are working!  Now open a new ter
 [Okta Angular Sample Apps]: https://github.com/okta/samples-js-angular
 [Okta React Sample Apps]: https://github.com/okta/samples-js-react
 [Okta Vue Sample Apps]: https://github.com/okta/samples-js-vue
-[Okta JWT Verifier]: https://github.com/okta/okta-oidc-js/tree/master/packages/jwt-verifier
+[Okta JWT Verifier]: https://github.com/okta/okta-jwt-verifier-js
 [OIDC SPA Setup Instructions]: https://developer.okta.com/authentication-guide/implementing-authentication/implicit#1-setting-up-your-application
